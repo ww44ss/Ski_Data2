@@ -140,23 +140,12 @@ for (k in number_of_ski_days){
         
         ## Get file ready to save
         every_ski_run$time<-as.character(every_ski_run$time)
-        
+        every_ski_run$chair<-as.character(every_ski_run$chair)
+        ## file directory
         Directory <- "/Users/winstonsaunders/Documents/Ski_Data2/"
         
         write.csv(every_ski_run, paste0(Directory,Pass,".csv"), row.names=F)
         
-#for (i in 1:length(ski_data_linksZ)) {
-#        ski_day_data <- readLines(ski_data_linksZ[i])
-#}
-
-
-
-
-
-
-## ANTOHER ATTEMPT AT USING XML
-
-# a<- readHTMLTable("http://track.mtbachelor.com/tyt.asp?passmediacode=MBA6360970&season=14-15&currentday=02/14/2015")
 # names(a)
 # length(a)
 # class(a[2])
@@ -171,29 +160,5 @@ for (k in number_of_ski_days){
 # 
 # sapply(b, class)
 # length(b)
-# 
-# 
-# ## another method for getting a table
-# c<-htmlParse(a)  ## generates warnings
-# tableNodes <- getNodeSet(c, "//table")
 
 
-# ## THIS IS A CODE CHUNK EXPLORING THE {rvest} PACKAGE
-# 
-#         library(rvest)
-# 
-#         tyt_data<-html("http://track.mtbachelor.com/tyt.asp?passmediacode=MBA6360970&season=13-14&currentday=null")
-# 
-#         object tyt_data is an html/xml object
-#
-#         html_nodes(tyt_data, xpath = '//*[contains(concat( " ", @class, " " ), concat( " ", "sample", " " ))]//table[(((count(preceding-sibling::*) + 1) = 2) and parent::*)] | //*[contains(concat( " ", @class, " " ), concat( " ", "sample", " " ))]//table//table//table//b//select') %>% html_attrs()
-# 
-#         strong_spanX1 <- '//center | //input//select//*[contains(concat( " ", @class, " " ), concat( " ", "sample", " " ))]//table[(((count(preceding-sibling::*) + 1) = 2) and parent::*)]//*[contains(concat( " ", @class, " " ), concat( " ", "sample", " " ))]//table//table//table//b'
-#  
-#         strong_span <- '//form | //*[contains(concat( " ", @class, " " ), concat( " ", "sample", " " ))]//table[(((count(preceding-sibling::*) + 1) = 2) and parent::*)]'
-# 
-#         java_widget <- '//input | //select'
-# 
-#         html_nodes(tyt_data, xpath= strong_span)%>% html_attrs()
-# 
-#         html_nodes(tyt_data, xpath= java_widget)%>% html_attrs()
