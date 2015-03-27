@@ -1,0 +1,35 @@
+---
+title: "Ski Pass Exploratory"
+author: "Winston Saunders"
+date: "March 26, 2015"
+output: html_document
+---
+
+
+```{r}
+## PASS NUMBER
+        Pass <- "MBA6360970"
+
+        Directory <- "/Users/winstonsaunders/Documents/Ski_Data2/"
+        
+        ski_runs<-read.csv(paste0(Directory,Pass,".csv"))
+
+
+```
+
+```{r}
+head(ski_runs)
+
+ski_runs$time<-strptime(ski_runs$time, "%Y-%m-%d %I:%M:%S")
+
+str(ski_runs)
+
+head(ski_runs, 20)
+
+```
+
+```{r}
+library(timeDate)
+
+ski_runs$weekend<-isWeekend(ski_runs$time)
+ski_runs$holiday<-isHoliday(ski_runs$time)
