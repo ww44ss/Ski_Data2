@@ -19,8 +19,9 @@
         
         
         skier_day_record<-NULL
- 
-for (j in 06:15) { 
+
+## HIT THE SEASONS
+        for (j in 6:15) { 
         
         ##MAKE THE HYPERLINK
         link <- paste0("http://track.mtbachelor.com/tyt.asp?passmediacode=", Pass,"&season=", Season[j], "&currentday=null" )
@@ -69,13 +70,16 @@ for (j in 06:15) {
         
         ## convert to data frame
         ski_data_links <-as.data.frame(as.matrix(ski_data_links, ncols=1))
+        
+        ## create a column of Pass for later id
+        pass_id <- rep(Pass, dim(ski_day_data)[1])
+        
         ## bind to date
         
-        
-        ski_day_data<-cbind(ski_day_data, ski_data_links)
+        ski_day_data<-cbind(pass_id, ski_day_data, ski_data_links)
         ## name columns
-        colnames(ski_day_data)<-c("date", "link")
-
+        colnames(ski_day_data)<-c("pass_id","date", "link")
+        
         skier_day_record<-rbind(skier_day_record, ski_day_data)
 }
 
@@ -90,25 +94,29 @@ every_ski_run<-NULL
 for (k in number_of_ski_days){
         
         print(k)
+        print(skier_day_record$link[k])
         
         day_runs_data<-readLines(as.character(skier_day_record$link[k]))
         
         ## Keep just the lines of interest
-        aa<- grepl("\t\t\t<td",day_runs_data)
-        ## Get rid of some nuisance lines
-        bb<- grepl("\t\t\t\t<td",day_runs_data)
+                ## filter for tables
+                aa<- grepl("\t\t\t<td",day_runs_data)
+                ## Get rid of some nuisance lines
+                bb<- grepl("\t\t\t\t<td",day_runs_data)
         
-        day_runs_data <- day_runs_data[aa&!bb]
-        day_runs_data <- day_runs_data[5:(4*floor(length(day_runs_data)/4-1))] 
-        
-        runs_data <- lapply(day_runs_data, function(x) {y<- regexpr(">", x)[1]
+                day_runs_data <- day_runs_data[aa&!bb]
+                ##get rid of header and summary rows at beginning and the end of the table
+                day_runs_data <- day_runs_data[5:(4*floor(length(day_runs_data)/4-1))] 
+                
+                ##get rid of html tags
+                runs_data <- lapply(day_runs_data, function(x) {y<- regexpr(">", x)[1]
                                                         z<- regexpr("</td>", x)[1]
                                                         substring(x,y+1,z-1) })
         
-        runs_data<-matrix(runs_data, ncol=4, byrow=TRUE, 
+                runs_data<-matrix(runs_data, ncol=4, byrow=TRUE, 
                           dimnames=list(1:(length(runs_data)/4),c("time", "chair", "vertical_feet", "vertical_meters")))
         
-        runs_data<-as.data.frame(runs_data)
+                runs_data<-as.data.frame(runs_data)
         
         ## clean up the data frame
         
@@ -123,6 +131,8 @@ for (k in number_of_ski_days){
                 runs_data$month<-runs_data$time$mon+1
                 runs_data$day<-runs_data$time$mday
                 runs_data$time_of_day<-strftime(runs_data$time, format="%H:%M:%S")
+                runs_data$date<-strftime(runs_data$time, format="%Y-%m-%d")
+                runs_data$pass_id<-rep(skier_day_record$pass_id[k], dim(runs_data)[1])
         
         every_ski_run<-rbind(every_ski_run, runs_data)
         }
@@ -135,7 +145,7 @@ for (k in number_of_ski_days){
         
         library(ggplot2)
         
-        p<-ggplot(every_ski_run, aes(x=time, y=vertical_feet))+geom_point()
+        p<-ggplot(every_ski_run, aes(x=time, y=vertical_feet, color=factor(year)))+geom_point()
         print(p)
         
         ## Get file ready to save
