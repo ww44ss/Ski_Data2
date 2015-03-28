@@ -17,7 +17,6 @@
         ## rip them off
         for (i in 1:15) Season[i] <- seasonfunction(i)
         
-        
         skier_day_record<-NULL
 
 ## HIT THE SEASONS

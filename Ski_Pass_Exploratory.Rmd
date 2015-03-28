@@ -20,7 +20,7 @@ output: html_document
 ```{r}
 head(ski_runs)
 
-ski_runs$time<-strptime(ski_runs$time, "%Y-%m-%d %I:%M:%S")
+ski_runs$time<-strptime(ski_runs$time, "%Y-%m-%d")
 
 str(ski_runs)
 
@@ -28,8 +28,38 @@ head(ski_runs, 20)
 
 ```
 
+Let's 
+
 ```{r}
 library(timeDate)
 
 ski_runs$weekend<-isWeekend(ski_runs$time)
-ski_runs$holiday<-isHoliday(ski_runs$time)
+ski_runs$holiday<-isHoliday(as.character(ski_runs$time))
+ski_runs$bizday<-isBizday(ski_runs$time)
+```
+
+```{r}
+stock <- "INTC"
+start.date <- "2009-01-12"
+end.date <- Sys.Date()
+quote <- paste("http://ichart.finance.yahoo.com/table.csv?s=",
+               stock, "&a=", substr(start.date,6,7),
+               "&b=", substr(start.date, 9, 10),
+               "&c=", substr(start.date, 1,4), 
+               "&d=", substr(end.date,6,7),
+               "&e=", substr(end.date, 9, 10),
+               "&f=", substr(end.date, 1,4),
+               "&g=d&ignore=.csv", sep="")    
+stock.data <- read.csv(quote, as.is=TRUE)
+stock.data <- transform(stock.data,
+                        week = as.POSIXlt(Date)$yday %/% 7 + 1,
+                        wday = as.POSIXlt(Date)$wday,
+                        year = as.POSIXlt(Date)$year + 1900)
+
+library(ggplot2)
+p1<-ggplot(stock.data, aes(week, wday, fill = Adj.Close)) + 
+  geom_tile(colour = "white") +
+  scale_fill_gradientn(colours = c("lightblue", "blue", "darkblue", "darkgreen")) + 
+  facet_wrap(~ year, ncol = 1)
+
+print(p1)
