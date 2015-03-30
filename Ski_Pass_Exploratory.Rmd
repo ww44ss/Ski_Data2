@@ -58,7 +58,7 @@ colnames(daily_vert)<-c("total_vertical","date","week","wday","year")
 library(ggplot2)
 p1<-ggplot(daily_vert, aes(week, wday, fill = total_vertical)) + 
   geom_tile(colour = "white") +
-  scale_fill_gradientn(colours = c("green", "blue", "salmon", "red")) + 
+  scale_fill_gradientn(colours = c("lightblue", "blue", "red")) + 
   facet_wrap(~ year, ncol = 1)
 
 print(p1)
