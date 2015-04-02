@@ -169,3 +169,24 @@ p<-ggplot(daily_vert, aes(x=count, y= total_vertical, color=factor(wday))) +
   
 print(p)
 ```
+
+###Chairlift Usage
+
+We can look if there are patterns in the charilift usage by looking for trends and patterns in the data on which chairs are ridden...
+
+####Chairlift Frequency
+
+First, let's just look at the number of rides on all chairs
+
+```{r, fig.height=5}
+
+chair_table<-table(ski_runs$chair)
+
+barplot(sort(chair_table, decreasing=TRUE), cex.names=.9, las=2)
+```
+
+We can use this to test each day against this pattern...
+
+
+
+
