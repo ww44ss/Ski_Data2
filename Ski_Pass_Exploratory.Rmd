@@ -50,7 +50,7 @@ ski_runs$bizday<-isBizday(as.timeDate(ski_runs$date))
 
 ##Daily vertical
 
-We can slice and dice the data many ways. One way, as below, is to sum data over days. 
+We can slice and dice the data many ways. One way, as below, is to sum vertical feet of runs to get total vertical feet skied per day. From there we can look variosu distributions. 
 
 ```{r "compute daily vert", echo=2}
 ## calculate daily vertical sums
@@ -106,3 +106,66 @@ p1<-ggplot(daily_vert, aes(week, wday, fill = total_vertical)) +
   facet_wrap(~ year, ncol = 1)
 
 print(p1)
+```
+
+####Chair lift totals
+
+Here we begin to look at the data in somewhat finer detail. For instance we can look at the total vertical feet skied on a particular chairlift per ski day.  
+
+For the Pine Marten chair lift.  
+
+
+```{r "compute daily Pine vert", echo=2}
+## calculate daily vertical sums
+Pine_runs <- ski_runs[ski_runs$chair=="Pine Marten",]
+daily_vert<-rowsum(Pine_runs$vertical_feet, Pine_runs$date)
+daily_vert<-as.data.frame(daily_vert)
+daily_vert$date<-rownames(daily_vert)
+
+
+daily_vert <- transform(daily_vert,
+                        week = as.POSIXlt(date)$yday %/% 7 + 1,
+                        season_week = (as.POSIXlt(date)$yday+61)%%365 %/% 7+1,
+                        wday = as.POSIXlt(date)$wday,
+                        year = as.POSIXlt(date)$year+1900)
+
+colnames(daily_vert)<-c("total_vertical","date","week","season_week" ,"wday","year")
+```
+
+
+```{r, fig.height=8}
+library(ggplot2)
+p<-ggplot(daily_vert, aes(x=week, y= total_vertical, color=factor(wday))) + 
+  geom_point(size=3) + ggtitle("Pine Marten") +facet_grid(year~.)
+  
+print(p)
+```
+
+
+```{r "compute daily Sunrise vert", echo=2}
+## calculate daily vertical sums
+Sunrise_runs <- ski_runs[ski_runs$chair=="Sunrise",]
+daily_vert<-rowsum(Pine_runs$vertical_feet, Pine_runs$date)
+daily_vert<-as.data.frame(daily_vert)
+daily_vert$date<-rownames(daily_vert)
+
+
+daily_vert <- transform(daily_vert,
+                        week = as.POSIXlt(date)$yday %/% 7 + 1,
+                        season_week = (as.POSIXlt(date)$yday+61)%%365 %/% 7+1,
+                        wday = as.POSIXlt(date)$wday,
+                        year = as.POSIXlt(date)$year+1900)
+
+daily_vert$count<-1:dim(daily_vert)[1]
+
+colnames(daily_vert)<-c("total_vertical","date","week","season_week" ,"wday","year", "count")
+```
+
+
+```{r, fig.height=4}
+library(ggplot2)
+p<-ggplot(daily_vert, aes(x=count, y= total_vertical, color=factor(wday))) + 
+  geom_point(size=3) + ggtitle("Sunrise")
+  
+print(p)
+```
