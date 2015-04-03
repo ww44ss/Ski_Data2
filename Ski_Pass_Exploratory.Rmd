@@ -218,6 +218,51 @@ for (i in 1:date_list_length) {
 
 ```
 
+```{r "try a season hack"}
+run_list$season<-rep("00-00", dim(run_list)[1])
+
+run_list<-as.matrix(run_list)
+
+season_hacker<-function(x)
+        {
+        d<-as.Date(as.character(x$ski_date))
+        
+        ## brute force seasons
+        b<-"00-00"
+        if (d<as.Date("2015-08-01")){b<-"14-15"
+                }
+        if (d<as.Date("2014-08-01")){b<-"13-14"
+                }
+        if (d<as.Date("2013-08-01")){b<-"12-13"
+                }
+        if (d<as.Date("2012-08-01")){b<-"11-12"
+                }
+        if (d<as.Date("2011-08-01")){b<-"10-11"
+                }
+        if (d<as.Date("2010-08-01")){b<-"09-10"
+                }
+        if (d<as.Date("2009-08-01")){b<-"08-09"
+                }
+        if (d<as.Date("2008-08-01")){b<-"07-08"
+                }
+        if (d<as.Date("2007-08-01")){b<-"06-07"
+                }
+        if (d<as.Date("2006-08-01")){b<-"05-06"
+                }
+        print(b)
+        return(b)
+        }
+
+
+
+```
+
+```{r}
+for (i in 1:dim(run_list)[1]){
+        run_list$season<-season_hacker(run_list[i,])
+}
+
+```
 
 ```{r}
 print(run_list[1:20,])
