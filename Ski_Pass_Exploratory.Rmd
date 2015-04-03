@@ -225,8 +225,19 @@ print(run_list[1:20,])
 
 ```{r, fig.width=10, fig.height=4}
 library(ggplot2)
-p<-ggplot(run_list[1:200,], aes(x=ski_date, y=Var1, size=Freq))
+p<-ggplot(run_list[1:370,], aes(x=ski_date, y=Var1, size=Freq))
 p<-p + geom_point()
-p<-p + theme(axis.text.x=element_text(angle=50, size=5, vjust=0.5))
+p<-p + theme(axis.text.x=element_text(angle=60, size=10, vjust=0.5))
 print(p)
 
+```
+
+
+```{r, fig.width=10, fig.height=4}
+library(ggplot2)
+p<-ggplot(run_list[370:740,], aes(x=ski_date, y=Var1, size=Freq))
+p<-p + geom_point()
+p<-p + theme(axis.text.x=element_text(angle=60, size=10, vjust=0.5))
+print(p)
+
+```
