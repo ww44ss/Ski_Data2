@@ -32,7 +32,7 @@ Data are extracted from the [Track Your Turns](http://track.mtbachelor.com/index
 Let's look at a sample of the ski runs data:
 
 ```{r, echo=TRUE}
-print_sample<-sort(sample(1:dim(ski_runs)[1], 15))
+print_sample<-sort(sample(1:dim(ski_runs)[1], 10))
 print(ski_runs[print_sample,2:8])
 ```
 
@@ -74,15 +74,15 @@ A first analysis, as below, shows the daily total vert plotted as a function of 
 ```{r}
 library(ggplot2)
 p<-ggplot(daily_vert, aes(x=season_week, y= total_vertical)) + 
-  geom_point(size=3) + geom_smooth()
-  
+  geom_point(size=3)+ggtitle("Ski-Day Total Vertical")
 print(p)
 ```
 Another way to look at the data is as a histogram of daily total vertical for all ski days. 
 ```{r}
 library(ggplot2)
 p<-ggplot(daily_vert, aes(x= total_vertical)) + 
-  geom_histogram(colour = "darkgreen", fill = "khaki4", binwidth = 2000, aes(y=..count..)) 
+  geom_histogram(colour = "darkgreen", fill = "khaki4", binwidth = 2000, aes(y=..count..))
+p <- p + ggtitle("Histogram of Daily Vertical Totals")
   
 print(p)
 
@@ -92,7 +92,7 @@ print(p)
 options(scipen=999)
 ```
 
-The mean vertical is `r round(mean(daily_vert$total_vertical),0)` feet over `r dim(daily_vert)[1]` days.
+The mean vertical is `r round(mean(daily_vert$total_vertical),0)` feet over `r dim(daily_vert)[1]` days. The most frequent daily total is about 22000 feet / day.
 
 ##Visual Summary of Ski Seasons for `r Pass_Code`
 
@@ -161,6 +161,9 @@ daily_vert$count<-1:dim(daily_vert)[1]
 colnames(daily_vert)<-c("total_vertical","date","week","season_week" ,"wday","year", "count")
 ```
 
+```{r}
+head(daily_vert)
+```
 
 ```{r, fig.height=4}
 library(ggplot2)
@@ -187,6 +190,43 @@ barplot(sort(chair_table, decreasing=TRUE), cex.names=.9, las=2)
 
 We can use this to test each day against this pattern...
 
+```{r}
+
+chair_list <- unique(ski_runs$chair)
+
+chair_list
+
+date_list<-unique(ski_runs$date)
+
+date_list_length<-length(date_list)
+
+run_list<-NULL
+for (i in 1:date_list_length) {
+        
+        a <-table(ski_runs$chair[ski_runs$date==date_list[i]])
+        a<-as.data.frame(a)
+     
+        char_date<-as.character(as.Date(date_list[i]))
+        
+        ski_date<-rep(char_date, dim(a)[1])
+     
+        a<-cbind(a, ski_date)
+ 
+        run_list<-rbind(run_list,a)
+ 
+}
+
+```
 
 
+```{r}
+print(run_list[1:20,])
+```
+
+```{r, fig.width=10, fig.height=4}
+library(ggplot2)
+p<-ggplot(run_list[1:200,], aes(x=ski_date, y=Var1, size=Freq))
+p<-p + geom_point()
+p<-p + theme(axis.text.x=element_text(angle=50, size=5, vjust=0.5))
+print(p)
 
