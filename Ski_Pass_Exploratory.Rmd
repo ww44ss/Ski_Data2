@@ -50,7 +50,8 @@ ski_runs$bizday<-isBizday(as.timeDate(ski_runs$date))
 
 ##Daily vertical
 
-We can slice and dice the data many ways. One way, as below, is to sum vertical feet of runs to get total vertical feet skied per day. From there we can look variosu distributions. 
+We can slice and dice the data many ways. For this exploratory part we'll look at a couple of them just to get "dirty" with the data.  
+One way, as below, is to sum vertical feet of runs to get total vertical feet skied per day.  
 
 ```{r "compute daily vert", echo=2}
 ## calculate daily vertical sums
@@ -68,7 +69,7 @@ daily_vert <- transform(daily_vert,
 colnames(daily_vert)<-c("total_vertical","date","week","season_week" ,"wday","year")
 ```
 
-A first analysis, as below, shows the daily total vert plotted as a function of "Ski Season Week" (i.e. weeks since Nov 1). The one point at week 40 is a high snow year, when they area opened on July 4th. 
+Plotted as below, shows the daily total vert plotted as a function of "Ski Season Week" (i.e. weeks since Nov 1). The one point at week 40 is a high snow year, when they area opened on July 4th. 
 
 
 ```{r}
@@ -218,19 +219,21 @@ for (i in 1:date_list_length) {
 
 ```
 
-```{r "try a season hack"}
-run_list$season<-rep("00-00", dim(run_list)[1])
+###Number of Chair Rides Per Day
+Let's explore graphically how frequently chairlifts are used throughout the season. 
 
-run_list<-as.matrix(run_list)
+
+```{r "try a season hack"}
+
+
 
 season_hacker<-function(x)
         {
-        d<-as.Date(as.character(x$ski_date))
+        d<-as.Date(x)
         
         ## brute force seasons
-        b<-"00-00"
         if (d<as.Date("2015-08-01")){b<-"14-15"
-                }
+                } 
         if (d<as.Date("2014-08-01")){b<-"13-14"
                 }
         if (d<as.Date("2013-08-01")){b<-"12-13"
@@ -249,40 +252,63 @@ season_hacker<-function(x)
                 }
         if (d<as.Date("2006-08-01")){b<-"05-06"
                 }
-        print(b)
         return(b)
         }
 
-
-
 ```
 
 ```{r}
-for (i in 1:dim(run_list)[1]){
-        run_list$season<-season_hacker(run_list[i,])
-}
+
+date_list<-as.character(run_list$ski_date)
+
+season<-lapply(date_list, season_hacker)
+
+season <- as.character(season)
+
+run_list <- cbind(run_list, season)
+
+## add some more features
+run_list <- transform(run_list,
+                week = as.POSIXlt(ski_date)$yday %/% 7 + 1,
+                season_day = (as.POSIXlt(ski_date)$yday+61)%%365+1,
+                wday = as.POSIXlt(ski_date)$wday,
+                year = as.POSIXlt(ski_date)$year+1900)
+
 
 ```
 
-```{r}
-print(run_list[1:20,])
-```
-
-```{r, fig.width=10, fig.height=4}
+```{r, fig.width=10, fig.height=6}
 library(ggplot2)
-p<-ggplot(run_list[1:370,], aes(x=ski_date, y=Var1, size=Freq))
+p<-ggplot(run_list[run_list$Freq>0,], aes(x=season_day, y=Var1, size=Freq, color=factor(wday)))
 p<-p + geom_point()
-p<-p + theme(axis.text.x=element_text(angle=60, size=10, vjust=0.5))
+p <- p + facet_wrap(~season, ncol=2)
+p<-p + theme(axis.text.x=element_text(angle=60, size=10, vjust=0.5), 
+             axis.text.y=element_text(size=8))
+p <- p + ggtitle("chair counts for all seasons")
 print(p)
 
 ```
 
+Let's zoom in on a couple of seasons
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.width=8, fig.height=3}
 library(ggplot2)
-p<-ggplot(run_list[370:740,], aes(x=ski_date, y=Var1, size=Freq))
+p<-ggplot(run_list[run_list$Freq>0 & run_list$season=="08-09",], aes(x=season_day, y=Var1, size=Freq, color=factor(wday)))
 p<-p + geom_point()
-p<-p + theme(axis.text.x=element_text(angle=60, size=10, vjust=0.5))
+p<-p + theme(axis.text.x=element_text(angle=60, size=10, vjust=0.5), 
+             axis.text.y=element_text(size=12))
+p<-p + ggtitle("chair counts for season 08-09")
+print(p)
+
+```
+
+```{r, fig.width=8, fig.height=3}
+library(ggplot2)
+p<-ggplot(run_list[run_list$Freq>0 & run_list$season=="11-12",], aes(x=season_day, y=Var1, size=Freq, color=factor(wday)))
+p<-p + geom_point()
+p<-p + theme(axis.text.x=element_text(angle=60, size=10, vjust=0.5), 
+             axis.text.y=element_text(size=12))
+p<-p + ggtitle("chair counts for season 11-12")
 print(p)
 
 ```
