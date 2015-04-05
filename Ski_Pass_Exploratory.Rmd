@@ -176,7 +176,7 @@ And as a last version, let's just look at all of the sunrise totals. But rather 
 head(daily_vert)
 ```
 
-```{r, fig.height=4, fig.width=8}
+```{r, "sunrise", fig.height=4, fig.width=8}
 library(ggplot2)
 
 mean_vert<-mean(daily_vert$total_vertical)
