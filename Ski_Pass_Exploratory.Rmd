@@ -62,7 +62,7 @@ daily_vert$date<-rownames(daily_vert)
 
 daily_vert <- transform(daily_vert,
                         week = as.POSIXlt(date)$yday %/% 7 + 1,
-                        season_week = (as.POSIXlt(date)$yday+61)%%365 %/% 7+1,
+                        season_week = (as.POSIXlt(date)$yday+31)%%365 %/% 7+1,
                         wday = as.POSIXlt(date)$wday,
                         year = as.POSIXlt(date)$year+1900)
 
@@ -126,7 +126,7 @@ daily_vert$date<-rownames(daily_vert)
 
 daily_vert <- transform(daily_vert,
                         week = as.POSIXlt(date)$yday %/% 7 + 1,
-                        season_week = (as.POSIXlt(date)$yday+61)%%365 %/% 7+1,
+                        season_week = (as.POSIXlt(date)$yday+31)%%365 %/% 7+1,
                         wday = as.POSIXlt(date)$wday,
                         year = as.POSIXlt(date)$year+1900)
 
@@ -146,7 +146,7 @@ print(p)
 ```{r "compute daily Sunrise vert", echo=2}
 ## calculate daily vertical sums
 Sunrise_runs <- ski_runs[ski_runs$chair=="Sunrise",]
-daily_vert<-rowsum(Pine_runs$vertical_feet, Pine_runs$date)
+daily_vert<-rowsum(Sunrise_runs$vertical_feet, Sunrise_runs$date)
 daily_vert<-as.data.frame(daily_vert)
 daily_vert$date<-rownames(daily_vert)
 
@@ -162,17 +162,42 @@ daily_vert$count<-1:dim(daily_vert)[1]
 colnames(daily_vert)<-c("total_vertical","date","week","season_week" ,"wday","year", "count")
 ```
 
+```{r, fig.height=8}
+library(ggplot2)
+p<-ggplot(daily_vert, aes(x=week, y= total_vertical, color=factor(wday))) + 
+  geom_point(size=3) + ggtitle("Sunrise")+facet_grid(year~.)
+  
+print(p)
+```
+
+And as a last version, let's just look at all of the sunrise totals. But rather than look at just the numbers, let's look at the z-statistic for totals. 
+
 ```{r}
 head(daily_vert)
 ```
 
-```{r, fig.height=4}
+```{r, fig.height=4, fig.width=8}
 library(ggplot2)
-p<-ggplot(daily_vert, aes(x=count, y= total_vertical, color=factor(wday))) + 
-  geom_point(size=3) + ggtitle("Sunrise")
+
+mean_vert<-mean(daily_vert$total_vertical)
+sdev_vert<-sqrt(var(daily_vert$total_vertical))
+
+
+daily_vert$z<-(daily_vert$total_vertical-mean_vert)/sdev_vert
+
+p<-ggplot(daily_vert, aes(x=count, y=z, color=factor(wday))) + 
+  geom_point(size=3) + ggtitle("Sunrise")+theme_bw()
   
 print(p)
 ```
+
+We can see, however, that the distribution has a very long tail....
+
+```{r}
+hist(daily_vert$z)
+
+```
+
 
 ###Chairlift Usage
 
@@ -194,8 +219,6 @@ We can use this to test each day against this pattern...
 ```{r}
 
 chair_list <- unique(ski_runs$chair)
-
-chair_list
 
 date_list<-unique(ski_runs$date)
 
@@ -219,7 +242,12 @@ for (i in 1:date_list_length) {
 
 ```
 
-###Number of Chair Rides Per Day
+```{r}
+head(run_list)
+
+```
+
+###Visualizing Chair Rides Per Day
 Let's explore graphically how frequently chairlifts are used throughout the season. 
 
 
