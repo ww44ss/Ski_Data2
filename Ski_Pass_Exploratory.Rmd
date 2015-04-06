@@ -170,7 +170,7 @@ p<-ggplot(daily_vert, aes(x=week, y= total_vertical, color=factor(wday))) +
 print(p)
 ```
 
-And as a last version, let's just look at all of the sunrise totals. But rather than look at just the numbers, let's look at the z-statistic for totals. 
+And as a last version, let's just look at all of the sunrise totals. But rather than look at just the numbers, let's look at the z-statistic for totals to look for outliers. Now this is starting to look likesomething useful...
 
 ```{r}
 head(daily_vert)
