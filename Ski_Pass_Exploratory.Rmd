@@ -258,13 +258,7 @@ for (i in 1:date_list_length) {
 head(run_list)
 
 ```
-
-
-
-###Visualizing Chair Rides Per Day
-Let's explore graphically how frequently chairlifts are used throughout the season. 
-
-
+####chair dev
 ```{r "try a season hack"}
 
 
@@ -298,6 +292,45 @@ season_hacker<-function(x)
         }
 
 ```
+
+```{r, fig.width=10, fig.height=6}
+chair_dev<-rowsum(run_list$run_sq_dev, run_list$ski_date)
+
+
+chair_dev<-as.data.frame(chair_dev)
+chair_dev$date<-rownames(chair_dev)
+colnames(chair_dev)<-c("run_sq_dev", "date")
+
+chair_dev <- transform(chair_dev,
+                        week = as.POSIXlt(date)$yday %/% 7 + 1,
+                        season_day = (as.POSIXlt(date)$yday+31)%%365+1,
+                        wday = as.POSIXlt(date)$wday,
+                        year = as.POSIXlt(date)$year+1900)
+
+
+date_list<-as.character(chair_dev$date)
+
+season<-lapply(date_list, season_hacker)
+
+season <- as.character(season)
+
+chair_dev <- cbind(chair_dev, season)
+
+
+print(head(chair_dev))
+# 
+p<-ggplot(chair_dev, aes(x=season_day, y=log10(run_sq_dev), color=factor(wday)))+geom_point()
+p<-p+facet_wrap(~season, ncol=2)
+print(p)
+
+
+
+```
+
+###Visualizing Chair Rides Per Day
+Let's explore graphically how frequently chairlifts are used throughout the season. 
+
+
 
 ```{r}
 
