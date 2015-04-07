@@ -210,6 +210,7 @@ First, let's just look at the number of rides on all chairs
 ```{r, fig.height=5}
 
 chair_table<-table(ski_runs$chair)
+df.chair_table<-as.data.frame(chair_table)
 
 barplot(sort(chair_table, decreasing=TRUE), cex.names=.9, las=2)
 ```
@@ -217,6 +218,11 @@ barplot(sort(chair_table, decreasing=TRUE), cex.names=.9, las=2)
 We can use this to test each day against this pattern...
 
 ```{r}
+
+number_of_days<-dim(daily_vert)[1]
+number_of_runs<-dim(ski_runs)[1]
+
+print(number_of_runs/number_of_days)
 
 chair_list <- unique(ski_runs$chair)
 
@@ -227,14 +233,20 @@ date_list_length<-length(date_list)
 run_list<-NULL
 for (i in 1:date_list_length) {
         
-        a <-table(ski_runs$chair[ski_runs$date==date_list[i]])
-        a<-as.data.frame(a)
+        chair_runs <-table(ski_runs$chair[ski_runs$date==date_list[i]])
+        chair_runs<-as.data.frame(chair_runs)
+        
+        normalized_runs<-round((number_of_days)*chair_runs$Freq/df.chair_table$Freq, 3)
+        
+        average_runs<-round(df.chair_table$Freq/number_of_days, 3)
+        
+        run_sq_dev<-(normalized_runs-average_runs)^2
      
         char_date<-as.character(as.Date(date_list[i]))
         
-        ski_date<-rep(char_date, dim(a)[1])
+        ski_date<-rep(char_date, dim(chair_runs)[1])
      
-        a<-cbind(a, ski_date)
+        a<-cbind(chair_runs,normalized_runs, run_sq_dev, average_runs, ski_date)
  
         run_list<-rbind(run_list,a)
  
@@ -246,6 +258,8 @@ for (i in 1:date_list_length) {
 head(run_list)
 
 ```
+
+
 
 ###Visualizing Chair Rides Per Day
 Let's explore graphically how frequently chairlifts are used throughout the season. 
@@ -303,6 +317,11 @@ run_list <- transform(run_list,
                 year = as.POSIXlt(ski_date)$year+1900)
 
 
+```
+
+```{r}
+print("Run list")
+head(run_list, 12)
 ```
 
 ```{r, fig.width=10, fig.height=6}
