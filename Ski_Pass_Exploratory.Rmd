@@ -369,7 +369,7 @@ print(p)
 
 ```
 
-Let's zoom in on a couple of seasons
+Let's zoom in on a couple of seasons for fun.
 
 ```{r, fig.width=8, fig.height=3}
 library(ggplot2)
