@@ -382,9 +382,23 @@ print(p)
 
 ```
 
-```{r, fig.width=8, fig.height=3}
+as an alternative way to look at things
+
+```{r, fig.width=4, fig.height=6}
 library(ggplot2)
-p<-ggplot(run_list[run_list$Freq>0 & run_list$season=="11-12",], aes(x=season_day, y=Var1, size=Freq, color=factor(wday)))
+p<-ggplot(run_list[run_list$Freq>0 & run_list$season=="11-12",], aes(x=Var1, y=season_day, size=Freq, color=factor(wday)))
+p<-p + geom_point()
+p<-p + theme(axis.text.x=element_text(angle=60, size=10, vjust=0.5), 
+             axis.text.y=element_text(size=12))
+p<-p + ggtitle("chair counts for season 11-12")
+print(p)
+
+```
+
+
+```{r, fig.width=4, fig.height=6}
+library(ggplot2)
+p<-ggplot(run_list[run_list$Freq>0 & run_list$season=="08-09",], aes(x=Var1, y=season_day, size=Freq, color=factor(wday)))
 p<-p + geom_point()
 p<-p + theme(axis.text.x=element_text(angle=60, size=10, vjust=0.5), 
              axis.text.y=element_text(size=12))
