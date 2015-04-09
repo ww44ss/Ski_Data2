@@ -32,7 +32,7 @@ Data are extracted from the [Track Your Turns](http://track.mtbachelor.com/index
 Let's look at a sample of the ski runs data:
 
 ```{r, echo=TRUE}
-print_sample<-sort(sample(1:dim(ski_runs)[1], 10))
+print_sample<-sort(sample(1:dim(ski_runs)[1], 8))
 print(ski_runs[print_sample,2:8])
 ```
 
@@ -109,6 +109,8 @@ p1<-ggplot(daily_vert, aes(week, wday, fill = total_vertical)) +
 print(p1)
 ```
 
+This is not a particularly useful way of looking at the data since it doesn't seem to provide much insight. 
+
 ####Chair lift totals
 
 Here we begin to look at the data in somewhat finer detail. For instance we can look at the total vertical feet skied on a particular chairlift per ski day.  
@@ -162,6 +164,8 @@ daily_vert$count<-1:dim(daily_vert)[1]
 colnames(daily_vert)<-c("total_vertical","date","week","season_week" ,"wday","year", "count")
 ```
 
+###Sunrise Chairlift z-statistics
+
 ```{r, fig.height=8}
 library(ggplot2)
 p<-ggplot(daily_vert, aes(x=week, y= total_vertical, color=factor(wday))) + 
@@ -185,19 +189,20 @@ sdev_vert<-sqrt(var(daily_vert$total_vertical))
 
 daily_vert$z<-(daily_vert$total_vertical-mean_vert)/sdev_vert
 
-p<-ggplot(daily_vert, aes(x=count, y=z, color=factor(wday))) + 
+p<-ggplot(daily_vert, aes(x=count, y=z, color=factor(year))) + 
   geom_point(size=3) + ggtitle("Sunrise")+theme_bw()
   
 print(p)
 ```
 
-We can see, however, that the distribution has a very long tail....
+We can see, however, that the distribution has a very long tail.
 
 ```{r}
 hist(daily_vert$z)
 
 ```
 
+This seems like we might be getting somewhere. This analysis emphasizes there were a couple of anomalous days in the 2008-2009 season..
 
 ###Chairlift Usage
 
