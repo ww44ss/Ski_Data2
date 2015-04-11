@@ -387,7 +387,7 @@ print(p)
 
 ```
 
-as an alternative way to look at things
+as an alternative way to look at things, let's try this
 
 ```{r, fig.width=4, fig.height=6}
 library(ggplot2)
