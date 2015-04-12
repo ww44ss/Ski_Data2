@@ -109,7 +109,7 @@ p1<-ggplot(daily_vert, aes(week, wday, fill = total_vertical)) +
 print(p1)
 ```
 
-This is not a particularly useful way of looking at the data since it doesn't seem to provide much insight. 
+While interesting, this is not a particularly useful way of looking at the data since it doesn't seem to provide much insight. 
 
 ####Chair lift totals
 
