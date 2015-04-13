@@ -115,7 +115,7 @@ While interesting, this is not a particularly useful way of looking at the data 
 
 Here we begin to look at the data in somewhat finer detail. For instance we can look at the total vertical feet skied on a particular chairlift per ski day.  
 
-For the Pine Marten chair lift.  
+For the Pine Marten chair lift. OOps
 
 
 ```{r "compute daily Pine vert", echo=2}
