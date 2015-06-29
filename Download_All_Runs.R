@@ -1,7 +1,8 @@
 
-
-## PASS NUMBER
-        Pass <- "MBA6360970"
+## GET PASS FILE
+        Directory <- "/Users/winstonsaunders/Documents/Ski_data2/"
+        valid_pass<-read.csv(paste0(Directory,"valid_pass.csv"))
+        colnames(valid_pass)<-c("count", "pass")
 
 ## SEASONS
         Season<-NULL
@@ -17,87 +18,100 @@
         ## rip them off
         for (i in 1:15) Season[i] <- seasonfunction(i)
         
+        
+
+## HIT THE PASSES
+    set.seed(8675309)
+    ## create pass sample of 121 passes from list of approximately 850
+    pass_sample<- sample(valid_pass$count, 121, replace=FALSE)
+    
+    for(PassIndex in pass_sample){
+        ## assign pass
+        Pass<-as.character(valid_pass$pass[PassIndex])
+        ## clear skier record
         skier_day_record<-NULL
-
-## HIT THE SEASONS
+        cat("getting data for pass ", Pass, "\n")    
         for (j in 6:15) { 
+            ## wait time of 1 to 2 secs between queries to not overwhelm server
+            Sys.sleep(1.0*runif(1)+1.)
+            ##MAKE THE HYPERLINK
+            link <- paste0("http://track.mtbachelor.com/tyt.asp?passmediacode=", Pass,"&season=", Season[j], "&currentday=null" )
+
+            cat("season", Season[j], " pass ", Pass, "\r")
+    
+            ## GET currentday DATA FOR A Specific Season
+
+            thepage = readLines(link)
+
+            ## get just the ski dates
+            ski_date_info<-grepl("\t\t\t<td><a href=", thepage)
+
+            ski_date_links <- thepage[ski_date_info]
         
-        ##MAKE THE HYPERLINK
-        link <- paste0("http://track.mtbachelor.com/tyt.asp?passmediacode=", Pass,"&season=", Season[j], "&currentday=null" )
 
-        print(Season[j])
-        print(link)
+            ## cut up the data to get web page links and dates
+            ## creates a data frame with the ski date and a link to the ski days.
 
-        ## GET currentday DATA FOR A Specific Season
-
-  
-        thepage = readLines(link)
-
-        ## get just the ski dates
-        ski_date_info<-grepl("\t\t\t<td><a href=", thepage)
-
-        ski_date_links <- thepage[ski_date_info]
-        
-
-        ## cut up the data to get web page links and dates
-        ## creates a data frame with the ski date and a link to the ski days.
-
-        ##cut the appropriate junk off the front
-        ski_date_links <- lapply(ski_date_links, function(x) {y<- regexpr("href=", x)
+            ##cut the appropriate junk off the front
+            ski_date_links <- lapply(ski_date_links, function(x) {y<- regexpr("href=", x)
                                          substring(x,y+6,nchar(x)) })
       
 
-        ## Get rid of the first line (which is junk)
-        ski_date_links<-ski_date_links[-1]  
+            ## Get rid of the first line (which is junk)
+            ski_date_links<-ski_date_links[-1]  
         
 
-        ## get the date
-        ski_date <- lapply(ski_date_links, function(x) {y<- regexpr("\">", x)
+            ## get the date
+            ski_date <- lapply(ski_date_links, function(x) {y<- regexpr("\">", x)
                                                  z<- regexpr("</a", x)
                                                    substring(x,y+2,z-1) })
 
-        #print(as.matrix(ski_date, ncols=1))
+            #print(as.matrix(ski_date, ncols=1))
 
-        ski_day_data<-as.data.frame(as.matrix(ski_date, ncols=1))
+            ski_day_data<-as.data.frame(as.matrix(ski_date, ncols=1))
 
 
-        ## create the link by hacking up the html
-        ski_date_links <- lapply(ski_date_links, function(x) {y<-regexpr("tyt", x)
+            ## create the link by hacking up the html
+            ski_date_links <- lapply(ski_date_links, function(x) {y<-regexpr("tyt", x)
                                                         z<- regexpr("\\\">", x)
                                                       substring(x,y,z-1) })
-        ski_data_links <- lapply(ski_date_links, function(x) paste0("http://track.mtbachelor.com/", x))
+            ski_data_links <- lapply(ski_date_links, function(x) paste0("http://track.mtbachelor.com/", x))
         
-        ## convert to data frame
-        ski_data_links <-as.data.frame(as.matrix(ski_data_links, ncols=1))
+            ## convert to data frame
+            ski_data_links <-as.data.frame(as.matrix(ski_data_links, ncols=1))
         
-        ## create a column of Pass for later id
-        pass_id <- rep(Pass, dim(ski_day_data)[1])
+            ## create a column of Pass for later id
+            pass_id <- rep(Pass, dim(ski_day_data)[1])
         
-        ## bind to date
+            ## bind to date
         
-        ski_day_data<-cbind(pass_id, ski_day_data, ski_data_links)
-        ## name columns
-        colnames(ski_day_data)<-c("pass_id","date", "link")
+            ski_day_data<-cbind(pass_id, ski_day_data, ski_data_links)
+            ## name columns
+            colnames(ski_day_data)<-c("pass_id","date", "link")
         
-        skier_day_record<-rbind(skier_day_record, ski_day_data)
-}
+            skier_day_record<-rbind(skier_day_record, ski_day_data)
+        }
 
-print(skier_day_record)
+        ## GET THE SKI RUN DATA FROM INDIVIDUAL SKI DAYS
+        number_of_ski_days<-1:dim(skier_day_record)[1]
         
-## GET THE SKI RUN DATA FROM INDIVIDUAL SKI DAYS
+        cat("number of ski days for ", Pass, "is", dim(skier_day_record)[1],  "\n")
         
-number_of_ski_days<-1:dim(skier_day_record)[1]
+        every_ski_run<-NULL
         
-every_ski_run<-NULL
-        
-for (k in number_of_ski_days){
-        
-        print(k)
-        print(skier_day_record$link[k])
-        
-        day_runs_data<-readLines(as.character(skier_day_record$link[k]))
-        
-        ## Keep just the lines of interest
+        ##GET DATA FOR EACH SKI DAY
+        for (k in number_of_ski_days){
+            
+            
+            ## wait time of 1 to 2 secs between queries to not overwhelm server
+            Sys.sleep(1.0*runif(1)+1.)
+            
+            ## readlines from server
+            day_runs_data<-readLines(as.character(skier_day_record$link[k]))
+            
+            cat(as.character(skier_day_record$link[k]), "\r")
+            
+            ## Keep just the lines of interest
                 ## filter for tables
                 aa<- grepl("\t\t\t<td",day_runs_data)
                 ## Get rid of some nuisance lines
@@ -111,13 +125,14 @@ for (k in number_of_ski_days){
                 runs_data <- lapply(day_runs_data, function(x) {y<- regexpr(">", x)[1]
                                                         z<- regexpr("</td>", x)[1]
                                                         substring(x,y+1,z-1) })
-        
-                runs_data<-matrix(runs_data, ncol=4, byrow=TRUE, 
+                
+            ##create matrix
+            runs_data<-matrix(runs_data, ncol=4, byrow=TRUE, 
                           dimnames=list(1:(length(runs_data)/4),c("time", "chair", "vertical_feet", "vertical_meters")))
+            ## convert to data frame
+            runs_data<-as.data.frame(runs_data)
         
-                runs_data<-as.data.frame(runs_data)
-        
-        ## clean up the data frame
+            ## clean up the data frame
         
                 ## turn the vertical into numbers
                 runs_data$vertical_feet<-as.numeric(gsub(",","", runs_data$vertical_feet))
@@ -133,41 +148,20 @@ for (k in number_of_ski_days){
                 runs_data$date<-strftime(runs_data$time, format="%Y-%m-%d")
                 runs_data$pass_id<-rep(skier_day_record$pass_id[k], dim(runs_data)[1])
         
-        every_ski_run<-rbind(every_ski_run, runs_data)
-        }
+                every_ski_run<-rbind(every_ski_run, runs_data)
+            }
         
-        ## convert to factor
         
-        print(dim(every_ski_run))
-        
-        head(every_ski_run)
-        
-        library(ggplot2)
-        
-        p<-ggplot(every_ski_run, aes(x=time, y=vertical_feet, color=factor(year)))+geom_point()
-        print(p)
-        
-        ## Get file ready to save
+        ## condition data to get file ready to save
         every_ski_run$time<-as.character(every_ski_run$time)
         every_ski_run$chair<-as.character(every_ski_run$chair)
         ## file directory
-        Directory <- "/Users/winstonsaunders/Documents/Ski_Data2/"
+        Store_Directory <- "/Users/winstonsaunders/Documents/Ski_Data2/Pass_data/"
         
-        write.csv(every_ski_run, paste0(Directory,Pass,".csv"), row.names=F)
-        
-# names(a)
-# length(a)
-# class(a[2])
-# 
-# b<-as.data.frame(a[2])
-# names(b)
-# 
-# class(b[2])
-# attributes(b[2])
-# 
-# c<-htmlParse(a)
-# 
-# sapply(b, class)
-# length(b)
+        write.csv(every_ski_run, paste0(Store_Directory,Pass,".csv"), row.names=F)
+        cat(nrow(every_ski_run), " runs for Pass ", Pass, "saved to ",paste0(Store_Directory,Pass,".csv"), "\n")
 
+    }  
+
+print("Program Ended")
 
