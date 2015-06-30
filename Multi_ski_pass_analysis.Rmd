@@ -8,7 +8,7 @@ output:
     number_sections: true
 ---
 
-##Summary  
+#Summary  
 This presentation looks at skier data in the form of chairlift rides for individual skip pass holders. Skier "days" for multiple seasons (05-06 to 14-15) were downloaded from a website which publishes them as a service to passholders. From each skier day a link was composed and used to get individual lift rides for each skier day.  
 
 In many cases over 1000 ski runs were documented for an individual skier.  
@@ -19,11 +19,12 @@ Key findings include:
 1. Skier behavior is remarkably reproducile on a day to day basis.  
 
 
-##Data Structure  
+#Data Structure  
 
-Data are read from previously downloaded data.  All ski runs for multiple seasons of individual skiers, including the date and time of a chairlift ride, and the chair elevation gain. Data for up to 122 skiers have been documented.  In the analysis below, to save time, only a subset are examined in these exploratory cases.
+All ski runs for seasons 05-06 through 14-15 of individual skiers, including the date and time of every chairlift ride, and the chair elevation gain, are documented. Currently data for 122 skiers have been documented.  In the analysis below, to save time, only a subset are examined in these exploratory cases.  
 
-```{r, echo=FALSE}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 library(timeDate)
 library(chron)
 library(ggplot2)
@@ -82,16 +83,158 @@ ordered_sample <- function(dataframe, n=6) {
 
 ```
 
- 
-##Skier to Skier Variation of Daily Vertical   
- 
-The first analysis will look at skier to skier variation of daily vertical (that is the sum of the vertical feet for each chairlift ride on a given day). The question to be addressed is whether this provides a signature of the individual skier.  
 
-A random sample of data from 23 out of the current `r length(valid_pass)` skiers is used. Below are the first few rows of the data. (NOTE - PASS NUMBERS HAVE BEEN HASHED TO PRESERVE ANONYMITY)
+ 
+##Raw Data
+
+<style>
+
+table { 
+    display: table;
+    border-collapse: collapse;
+    border-spacing: 10px;
+    border-color: gray;
+    background-color: #b0c0bf;
+    text-align: center
+}
+th, td {
+    
+    padding: 5px;
+}
+</style>
+ 
+Just to give a flavor for the data, here is a sample of ski runs for an individual skier. Note that the sample spans multiple years.  
+
 
 ```{r, echo=FALSE, results='asis', fig.align='center'}
+
+holidays_season = holidayNYSE(2005:2015)
+
+set.seed(8765309)
+
+for (pass in sample(valid_pass, 1)) {
+    ski_runs<-read.csv(paste0(Directory, pass))
+    
+    ## suppress pass_id
+    ski_runs$pass_id<-NULL
+    
+    ski_runs$pass<-digest(ski_runs$pass, algo="crc32")
+}
+
+print(xtable(ski_runs[ordered_sample(ski_runs, 9),]), type='html', comment=FALSE, include.rownames=FALSE, 
+      html.table.attributes='border="2" align="center" ' )
+
+```
+
+##Summarized for daily data
+
+Each skier makes between about 50 and 200 runs per season, so we need a way to meaningfully summarize the data. First let's explore looking at daily total runs and vertical feet.
+
+<style>
+
+table { 
+    display: table;
+    border-collapse: collapse;
+    border-spacing: 10px;
+    border-color: gray;
+    background-color: #f0c4f4;
+    text-align: center
+}
+th, td {
+    
+    padding: 5px;
+}
+</style>
+
+###Totals Runs Per Day
+
+Here is a sample of the data for total runs per day per skier.
+
+```{r, "runs_per_day",echo=FALSE, results='asis', fig.align='center'}
 set.seed(8675309)
 big_skier_record<-NULL
+
+holidays_season = holidayNYSE(2005:2015)
+
+for (pass in sample(valid_pass, 23)) {
+    ## read in the pass data
+    # pass<-valid_pass[3]  ## for debug
+    
+    ski_runs<-read.csv(paste0(Directory, pass))
+   
+    ski_runs$count <- 1
+    
+    ## use rowsum for calulate total vertical feet per unique day
+    runs_per_day<-rowsum(ski_runs$count, ski_runs$date)
+    runs_per_day<-as.data.frame(runs_per_day)
+    runs_per_day$date<-rownames(runs_per_day)
+    runs_per_day$pass_id<-ski_runs$pass_id[1]
+
+
+    runs_per_day <- transform(runs_per_day,
+                        week = as.POSIXlt(date)$yday %/% 7 + 1,
+                        season_week = (as.POSIXlt(date)$yday+31)%%365 %/% 7+1,
+                        wday = as.POSIXlt(date)$wday,
+                        year = as.POSIXlt(date)$year+1900,
+                        weekend<-isWeekend(date),
+                        holiday<-isHoliday(as.timeDate(date), holidays = holidays_season),
+                        bizday<-isBizday(as.timeDate(date), holidays = holidays_season)
+)
+
+    
+    
+    colnames(runs_per_day)<-c("runs_per_day","date", "pass","week","season_week" ,"wday", "year", "weekend", "holiday", "bizday")
+    
+    runs_per_day$year<-as.integer(runs_per_day$year)
+    runs_per_day$week<-as.integer(runs_per_day$week)
+    ## hash the pass numbers
+    set.seed(911)
+    runs_per_day$pass<-digest(runs_per_day$pass, algo="crc32")
+    ## make seasons
+    season<- sapply(runs_per_day$date, season_function)
+    season<-as.data.frame(season)
+    runs_per_day<-cbind(runs_per_day, season)
+    runs_per_day$season<-as.factor(runs_per_day$season)
+
+    
+    ## bind into big data frame
+    big_skier_record<-rbind(big_skier_record, runs_per_day)
+
+}
+
+set.seed(314159)
+
+
+print(xtable(big_skier_record[ordered_sample(big_skier_record, 9),]), type='html', comment=FALSE, include.rownames=FALSE, 
+      html.table.attributes='border="2" align="center" ' )
+
+```
+  
+  
+A random sample of data from 23 out of the `r length(valid_pass)` skiers is used. As can be seen from the graph below, the runs per skier are fairly consistent from season to season.  
+
+```{r, echo=FALSE, fig.align="center", fig.height=5, fig.width=10}
+
+ 
+p<-ggplot(big_skier_record, aes(x = pass, y= runs_per_day, colour=factor(season))) 
+p<-p+geom_boxplot(outlier.colour = NULL)
+p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p<-p+ggtitle("pattern of daily runs by skier")
+p <- p + guides(color=guide_legend(nrow=5))
+p <- p+ labs(x="skier (hashed)", y = "daily vertical (feet)")
+print(p)
+ 
+```
+
+###Total Vertical Feet Per Day
+
+We can also look at the number of vertical feet skied per day per skier. Again, most skiers seem to demonstrate fairly consistent behavior. 
+
+```{r, "daily_vert",echo=FALSE, results='asis', fig.align='center'}
+set.seed(8675309)
+big_skier_record<-NULL
+
+holidays_season = holidayNYSE(2005:2015)
 
 for (pass in sample(valid_pass, 23)) {
     ## read in the pass data
@@ -101,9 +244,10 @@ for (pass in sample(valid_pass, 23)) {
    
     
     ski_runs$weekend<-isWeekend(ski_runs$date)
-    ski_runs$holiday<-isHoliday(as.timeDate(ski_runs$date), holidays = holidayNYSE(), wday = 1:5)
+    ski_runs$holiday<-isHoliday(as.timeDate(ski_runs$date), holidays = holidays_season, wday = 1:5)
     ski_runs$bizday<-isBizday(as.timeDate(ski_runs$date))
 
+    ## use rowsum for calulate total vertical feet per unique day
     daily_vert<-rowsum(ski_runs$vertical_feet, ski_runs$date)
     daily_vert<-as.data.frame(daily_vert)
     daily_vert$date<-rownames(daily_vert)
@@ -116,8 +260,8 @@ for (pass in sample(valid_pass, 23)) {
                         wday = as.POSIXlt(date)$wday,
                         year = as.POSIXlt(date)$year+1900,
                         weekend<-isWeekend(date),
-                        holiday<-isHoliday(as.timeDate(date), holidays = holidayNYSE(2006:2015)),
-                        bizday<-isBizday(as.timeDate(date), holidays = holidayNYSE(2006:2015))
+                        holiday<-isHoliday(as.timeDate(date), holidays = holidays_season),
+                        bizday<-isBizday(as.timeDate(date), holidays = holidays_season)
 )
 
     
@@ -139,12 +283,18 @@ for (pass in sample(valid_pass, 23)) {
 
 }
 
-  
-print(xtable(big_skier_record[ordered_sample(big_skier_record, 30),]), type='html', comment=FALSE, include.rownames=FALSE, 
-      html.table.attributes='border="2" padding="10" align="center" bgcolor="red"' )
+set.seed(314159)
 
+
+print(xtable(big_skier_record[ordered_sample(big_skier_record, 9),]), type='html', comment=FALSE, include.rownames=FALSE, 
+      html.table.attributes='border="2" align="center" ' )
 
 ```
+
+
+ 
+
+A random sample of data from 23 out of the current `r length(valid_pass)` skiers is used. Below are the first few rows of the data. (NOTE - PASS NUMBERS HAVE BEEN HASHED TO PRESERVE ANONYMITY)
 
 There appears to be pretty good distinction between individual skiers. We can also check the data from season to season as below. Again, it appears to provide a reasonably consistent picture. 
 
@@ -168,43 +318,8 @@ print(p)
 
 q<-ggplot(big_skier_record, aes(total_vertical, fill=factor(pass)))
 q<-q+geom_histogram(binwidth=2000, color='grey51')
+q <- q + guides(fill=guide_legend(nrow=10))
 print(q)
-
-
-
-````
-
-
-```{r}
-
-q<-ggplot(big_skier_record, aes(total_vertical, fill=factor(season)))
-q<-q+geom_histogram(binwidth=2000, color='grey51')
-print(q)
-
-
-
-````
-
-
-```{r}
-
-p<-ggplot(big_skier_record, aes(x = season, y= total_vertical, colour=factor(pass))) 
-p<-p+geom_boxplot(outlier.colour = NULL)
-p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-p<-p+ggtitle("")
-print(p)
-
-
-
-````
-
-```{r}
-
-p<-ggplot(big_skier_record, aes(x = as.factor(wday), y= total_vertical, colour=factor(pass))) 
-p<-p+geom_boxplot(outlier.colour = NULL)
-p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-p<-p+ggtitle("")
-print(p)
 
 
 
