@@ -324,9 +324,9 @@ To analyze skier speed we need to add some more data. While the pass data tracks
 
     ## Data input
     ## base elev is in feet
-    base_elev <- c( 6477,  6405,  6335, 7248,  6389, 6379,  6344, 5983,  5709)
+    base_elev <- as.integer(c(6477,  6405,  6335, 7248, 6389, 6379, 6344, 5983,  5709))
     
-    chair_names<-c("Sunrise","Rainbow","Skyliner","Summit","Sunshine", "Pine Marten","Red" ,    "Outback" ,  "Northwest" )
+    chair_names<-c("Sunrise","Rainbow","Skyliner","Summit","Sunshine", "Pine Marten","Red" , "Outback" , "Northwest" )
     
     ## ride time is in minutes
     ride_time <- c(4.2, 11.03,  5.97, 4.67, 2.13, 4.85, 8.46, 7.01,  8.38)
@@ -337,9 +337,12 @@ To analyze skier speed we need to add some more data. While the pass data tracks
     ## index it to the ski_runs
     i<-cbind(match(ski_runs$chair, rownames(look_up)))
     
+    
+    
     ## add columns to the data frame
     ski_runs<- cbind(ride_time=look_up[i,1], base_elev=look_up[i,2], ski_runs)
 
+    print(head(ski_runs))
 
 ```
 
@@ -360,8 +363,10 @@ To analyze skier speed we need to add some more data. While the pass data tracks
     ## assuming the day ends where it started. 
     
     ski_runs$elev_end<-ski_runs$base_elev
-    ski_runs$dest_chair<-ski_runs$chair
+    ski_runs$chair_combo<-as.character(ski_runs$chair)
     ski_runs$time_end<-as.character(ski_runs$time)
+    
+    
     
     ## this need to be done on a day by day basis so we'll need to pull the data apart
     ## on a day by day basis.
@@ -382,17 +387,36 @@ To analyze skier speed we need to add some more data. While the pass data tracks
         
         ss<-transform(ss, elev_end = shift2(elev_end, 1))
         ss<-transform(ss, time_end = shift2(time_end, 1))
-        ss<-transform(ss, dest_chair = shift2(dest_chair, 1))
+        ss<-transform(ss, chair_combo = shift2(chair_combo, 1))
         
-        ss$ski_time<-difftime(strptime(ss$time_end, "%Y-%m-%d %H:%M:%S"),strptime(ss$time, "%Y-%m-%d %H:%M:%S"), units = "mins" )
+        ## fix chair combo
+        ss$chair_combo[nrow(ss)]<-as.character(ss$chair[1])
         
+        ss$ski_time<-difftime(strptime(ss$time_end, "%Y-%m-%d %H:%M:%S"),strptime(ss$time, "%Y-%m-%d %H:%M:%S"), units = "mins" )[[1]]
         
+        ## calulate vertical feet/minute correcting for chairlift time
+        ss$ski_speed<-(ss$base_elev+ss$vertical_feet)/(ss$ski_time-ss$ride_time)
+        ss$chair_combo <- paste(ss$chair, as.character(ss$chair_combo))
+        
+        ski_start_stop<-rbind(ski_start_stop, ss)
     }
     
     
+print(ski_start_stop[1:30,  ])
 
+```
 
+So let's look at ski speed to see if more related to a skier or to a ski run.
 
+```{r, echo=FALSE, fig.align="center", fig.height=7, fig.width=10}
 
-
+ 
+p<-ggplot(ski_start_stop, aes(x = pass_id, y= ski_speed)) 
+p<-p+geom_boxplot(outlier.colour = NULL)
+p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p<-p+ggtitle("pattern of skier speed")
+p <- p + guides(color=guide_legend(nrow=15))
+p <- p+ labs(x="skier (hashed)", y = "ski speed (vertical feet/minute)")
+print(p)
+ 
 ```
