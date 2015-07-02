@@ -94,8 +94,9 @@ table {
     border-collapse: collapse;
     border-spacing: 10px;
     border-color: gray;
-    background-color: #b0c0bf;
+    background-color: #a0c0bf;
     text-align: center
+    font: 12px arial, sans-serif;
 }
 th, td {
     
@@ -130,21 +131,7 @@ print(xtable(ski_runs[ordered_sample(ski_runs, 9),]), type='html', comment=FALSE
 
 Each skier makes between about 50 and 200 runs per season, so we need a way to meaningfully summarize the data. First let's explore looking at daily total runs and vertical feet.
 
-<style>
 
-table { 
-    display: table;
-    border-collapse: collapse;
-    border-spacing: 10px;
-    border-color: gray;
-    background-color: #f0c4f4;
-    text-align: center
-}
-th, td {
-    
-    padding: 5px;
-}
-</style>
 
 ###Totals Runs Per Day
 
@@ -236,7 +223,7 @@ big_skier_record<-NULL
 
 holidays_season = holidayNYSE(2005:2015)
 
-for (pass in sample(valid_pass, 23)) {
+for (pass in sample(valid_pass, 8)) {
     ## read in the pass data
     # pass<-valid_pass[3]  ## for debug
     
@@ -314,13 +301,98 @@ print(p)
 
 
 
-```{r}
+```{r, echo=FALSE, fig.align="center", fig.height=5, fig.width=10}
 
-q<-ggplot(big_skier_record, aes(total_vertical, fill=factor(pass)))
-q<-q+geom_histogram(binwidth=2000, color='grey51')
-q <- q + guides(fill=guide_legend(nrow=10))
+q<-ggplot(big_skier_record, aes(total_vertical, ..density.., color=factor(pass)))
+q<-q+geom_histogram(binwidth=2000, fill='grey51', position="dodge", alpha=0.08)
+q<-q+geom_density()
+q <- q + guides(color=guide_legend(nrow=10))
 print(q)
 
 
 
-````
+```
+
+
+##Skier Speed Analytics
+
+To analyze skier speed we need to add some more data. While the pass data tracks the vertical rise of the chairlift ride, the descent, which is the actual skiing part, is to the base of the next chairlift. Base elevations are not supplied with the downloaded data so need to be added. We can get some more data from the [Master Development Plan](http://www.mtbachelor.com/site/about_us/company_info/forest_service/MDP_Text.pdf)
+
+```{r "base elevations", echo=FALSE}
+
+    ## Add base elevation and nominal chairlift ride time to the data
+
+    ## Data input
+    ## base elev is in feet
+    base_elev <- c( 6477,  6405,  6335, 7248,  6389, 6379,  6344, 5983,  5709)
+    
+    chair_names<-c("Sunrise","Rainbow","Skyliner","Summit","Sunshine", "Pine Marten","Red" ,    "Outback" ,  "Northwest" )
+    
+    ## ride time is in minutes
+    ride_time <- c(4.2, 11.03,  5.97, 4.67, 2.13, 4.85, 8.46, 7.01,  8.38)
+    
+    ## create look_up table for base and ride time data by chairlift
+    look_up <- matrix(c(ride_time, base_elev), 9,2, dimnames=list(chair_names, c("ride_time", "base_elev")))
+    
+    ## index it to the ski_runs
+    i<-cbind(match(ski_runs$chair, rownames(look_up)))
+    
+    ## add columns to the data frame
+    ski_runs<- cbind(ride_time=look_up[i,1], base_elev=look_up[i,2], ski_runs)
+
+
+```
+
+```{r, "ski descent time"}
+    
+    ## Calculate ski descent time and vertical / time
+    ## the general approach will be to calculate first for each run (chair ride),
+    ##      a start time, 
+    ##      a start elevation, an end time, and an end elevation. 
+    ##
+    ## from there can calculate for each run the vertical / time of the skier.
+    
+    ## to start we need to break down the data into individual ski days
+    
+    ## create data frame columns
+    ## since the end time of a run is the start time of the next run, we'll move 
+    ## the data over. We'll also need to duplicate the data from teh first run of the day 
+    ## assuming the day ends where it started. 
+    
+    ski_runs$elev_end<-ski_runs$base_elev
+    ski_runs$dest_chair<-ski_runs$chair
+    ski_runs$time_end<-as.character(ski_runs$time)
+    
+    ## this need to be done on a day by day basis so we'll need to pull the data apart
+    ## on a day by day basis.
+    ## first step is grab unique days
+    ski_days<-unique(ski_runs$date)
+    
+    ## define accumulator data frame
+    ski_start_stop<-NULL
+    
+    for (days in ski_days) {
+        
+        ## get runs for specific day
+        ss<-ski_runs[ski_runs$date==days,]
+        
+        
+        
+        shift2 <- function(x, n) c(tail(x, -n), rep(NA, n))
+        
+        ss<-transform(ss, elev_end = shift2(elev_end, 1))
+        ss<-transform(ss, time_end = shift2(time_end, 1))
+        ss<-transform(ss, dest_chair = shift2(dest_chair, 1))
+        
+        ss$ski_time<-difftime(strptime(ss$time_end, "%Y-%m-%d %H:%M:%S"),strptime(ss$time, "%Y-%m-%d %H:%M:%S"), units = "mins" )
+        
+        
+    }
+    
+    
+
+
+
+
+
+```
