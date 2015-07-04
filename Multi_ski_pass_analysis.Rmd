@@ -335,18 +335,11 @@ To analyze skier speed we need to add some more data. While the pass data tracks
     look_up <- matrix(c(ride_time, base_elev), 9,2, dimnames=list(chair_names, c("ride_time", "base_elev")))
     
     ## index it to the ski_runs
-    i<-cbind(match(ski_runs$chair, rownames(look_up)))
-    
-    
-    
-    ## add columns to the data frame
-    ski_runs<- cbind(ride_time=look_up[i,1], base_elev=look_up[i,2], ski_runs)
-
-    print(head(ski_runs))
+   
 
 ```
 
-```{r, "ski descent time"}
+```{r, "ski descent time", echo=FALSE}
     
     ## Calculate ski descent time and vertical / time
     ## the general approach will be to calculate first for each run (chair ride),
@@ -361,7 +354,53 @@ To analyze skier speed we need to add some more data. While the pass data tracks
     ## since the end time of a run is the start time of the next run, we'll move 
     ## the data over. We'll also need to duplicate the data from teh first run of the day 
     ## assuming the day ends where it started. 
+
+set.seed(8675309)
+holidays_season = holidayNYSE(2005:2015)
+
+big_skier_record<-NULL
+
+for (pass in sample(valid_pass, 8)) {
+    ## read in the pass data
     
+    ##xxx<-sample(valid_pass,8)  # for debug
+    ##pass<-xxx[2]
+
+    print(pass)
+    
+    ski_runs<-NULL
+    
+    ski_runs<-read.csv(paste0(Directory, pass))
+    
+    pass_s<-ski_runs$pass_id[1]
+    ## suppress pass_id
+    ski_runs$pass_id<-NULL
+    ## hash the pass
+    
+    ##ski_runs$pass<-digest(pass_s, algo="crc32")
+    ski_runs$pass<-pass_s
+    
+    
+    #ski_runs$weekend<-isWeekend(ski_runs$date)
+    ski_runs$holiday<-isHoliday(as.timeDate(ski_runs$date), holidays = holidays_season, wday = 1:5)
+    #ski_runs$bizday<-isBizday(as.timeDate(ski_runs$date))
+    
+    ## add lookup data
+    i<-cbind(match(ski_runs$chair, rownames(look_up)))
+    
+    ## add columns to the data frame
+    ski_runs<- cbind(ride_time=look_up[i,1], base_elev=look_up[i,2], ski_runs)
+
+    ##get rid of junk columns
+    ski_runs$vertical_meters<-NULL
+    ##ski_runs$date<-NULL
+    ski_runs$year<-NULL
+    ski_runs$month<-NULL
+    ski_runs$day<-NULL
+    ski_runs$time_of_day<-NULL
+    
+    ##print(head(ski_runs))
+       
     ski_runs$elev_end<-ski_runs$base_elev
     ski_runs$chair_combo<-as.character(ski_runs$chair)
     ski_runs$time_end<-as.character(ski_runs$time)
@@ -369,7 +408,7 @@ To analyze skier speed we need to add some more data. While the pass data tracks
     
     
     ## this need to be done on a day by day basis so we'll need to pull the data apart
-    ## on a day by day basis.
+    ## and reassemble after manip
     ## first step is grab unique days
     ski_days<-unique(ski_runs$date)
     
@@ -385,34 +424,59 @@ To analyze skier speed we need to add some more data. While the pass data tracks
         
         shift2 <- function(x, n) c(tail(x, -n), rep(NA, n))
         
+        end_elev<-ss$elev_end[1]
         ss<-transform(ss, elev_end = shift2(elev_end, 1))
+        ss$elev_end[nrow(ss)]<-end_elev
         ss<-transform(ss, time_end = shift2(time_end, 1))
         ss<-transform(ss, chair_combo = shift2(chair_combo, 1))
         
         ## fix chair combo
         ss$chair_combo[nrow(ss)]<-as.character(ss$chair[1])
         
-        ss$ski_time<-difftime(strptime(ss$time_end, "%Y-%m-%d %H:%M:%S"),strptime(ss$time, "%Y-%m-%d %H:%M:%S"), units = "mins" )[[1]]
+        ss$ski_time<-difftime(strptime(ss$time_end, "%Y-%m-%d %H:%M:%S"),strptime(ss$time, "%Y-%m-%d %H:%M:%S"), units = "mins" )
         
         ## calulate vertical feet/minute correcting for chairlift time
-        ss$ski_speed<-(ss$base_elev+ss$vertical_feet)/(ss$ski_time-ss$ride_time)
+        ss$delta_vert<-ss$base_elev+ss$vertical_feet-ss$elev_end
+        
+        ss$ski_speed<-(ss$base_elev+ss$vertical_feet-ss$elev)/(as.numeric(ss$ski_time)-ss$ride_time)
         ss$chair_combo <- paste(ss$chair, as.character(ss$chair_combo))
         
         ski_start_stop<-rbind(ski_start_stop, ss)
+        
     }
     
     
-print(ski_start_stop[1:30,  ])
+    
+    big_skier_record<-rbind(big_skier_record, ski_start_stop)
+}    
+
+ 
 
 ```
 
-So let's look at ski speed to see if more related to a skier or to a ski run.
+So let's look at ski speed to see if more related to a skier or to a ski run.  
+A note here. I've filtered out several items:
+ski times that are below the chairlift ride time result in "negative" speeds and are anomalous. It will be worth looking at these in more detail, because they appear to occur for some users and not others. In some cases it appears that riders may have checked in to, say Summit, but then decided to ski back down to Sunrise. In others lap times of long chairs, such as Northwest, just appear to be shorter than the chair ride time.  
+
+
+```{r, echo=FALSE}
+
+    ## get rid of NA values
+    big_skier_record<-big_skier_record[!is.na(big_skier_record$ski_speed),]
+    ## get rid of negative ski_speeds
+    big_skier_record<-big_skier_record[big_skier_record$ski_speed>0,]
+    big_skier_record<-big_skier_record[big_skier_record$ski_speed<600,]
+
+```
 
 ```{r, echo=FALSE, fig.align="center", fig.height=7, fig.width=10}
 
+ ## filter negative values out
  
-p<-ggplot(ski_start_stop, aes(x = pass_id, y= ski_speed)) 
-p<-p+geom_boxplot(outlier.colour = NULL)
+ 
+ 
+p<-ggplot(big_skier_record, aes(x = pass, y= ski_speed)) 
+p<-p+geom_boxplot(outlier.colour = "red")
 p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p<-p+ggtitle("pattern of skier speed")
 p <- p + guides(color=guide_legend(nrow=15))
@@ -420,3 +484,17 @@ p <- p+ labs(x="skier (hashed)", y = "ski speed (vertical feet/minute)")
 print(p)
  
 ```
+
+```{r, echo=FALSE, fig.align="center", fig.height=10, fig.width=10}
+
+q<-ggplot(big_skier_record, aes(ski_speed, fill=factor(chair), y=..density..))
+q<-q+geom_histogram(binwidth=20,color="red")
+#q<- q + geom_density()
+q<-q+facet_grid(pass~holiday)
+q <- q + guides(color=guide_legend(nrow=10))
+print(q)
+
+
+
+```
+
