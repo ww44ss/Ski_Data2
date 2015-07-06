@@ -30,6 +30,7 @@ library(chron)
 library(ggplot2)
 library(xtable)
 library(digest)
+library(plyr)
 
 
 
@@ -143,7 +144,9 @@ big_skier_record<-NULL
 
 holidays_season = holidayNYSE(2005:2015)
 
-for (pass in sample(valid_pass, 23)) {
+pass_sample <- sample(valid_pass, 23)
+
+for (pass in pass_sample ) {
     ## read in the pass data
     # pass<-valid_pass[3]  ## for debug
     
@@ -198,7 +201,7 @@ print(xtable(big_skier_record[ordered_sample(big_skier_record, 9),]), type='html
 ```
   
   
-A random sample of data from 23 out of the `r length(valid_pass)` skiers is used. As can be seen from the graph below, the runs per skier are fairly consistent from season to season.  
+From random sample of data from `r length(pass_sample)` out of the `r length(valid_pass)` skiers a graph below show that runs per skier are fairly consistent from season to season.  
 
 ```{r, echo=FALSE, fig.align="center", fig.height=5, fig.width=10}
 
@@ -223,7 +226,9 @@ big_skier_record<-NULL
 
 holidays_season = holidayNYSE(2005:2015)
 
-for (pass in sample(valid_pass, 8)) {
+pass_sample<-sample(valid_pass, 8)
+
+for (pass in pass_sample) {
     ## read in the pass data
     # pass<-valid_pass[3]  ## for debug
     
@@ -281,7 +286,7 @@ print(xtable(big_skier_record[ordered_sample(big_skier_record, 9),]), type='html
 
  
 
-A random sample of data from 23 out of the current `r length(valid_pass)` skiers is used. Below are the first few rows of the data. (NOTE - PASS NUMBERS HAVE BEEN HASHED TO PRESERVE ANONYMITY)
+A random sample of `r length(pass_sample)` of the current `r length(valid_pass)` skiers is used. Below are the first few rows of the data. (NOTE - PASS NUMBERS HAVE BEEN HASHED TO PRESERVE ANONYMITY)
 
 There appears to be pretty good distinction between individual skiers. We can also check the data from season to season as below. Again, it appears to provide a reasonably consistent picture. 
 
@@ -307,6 +312,8 @@ q<-ggplot(big_skier_record, aes(total_vertical, ..density.., color=factor(pass))
 q<-q+geom_histogram(binwidth=2000, fill='grey51', position="dodge", alpha=0.08)
 q<-q+geom_density()
 q <- q + guides(color=guide_legend(nrow=10))
+q<-q+ggtitle("Daily Vert Shows Strong Skier Dependence")
+q<-q+scale_x_continuous(limits=c(0, 30000))
 print(q)
 
 
@@ -314,7 +321,7 @@ print(q)
 ```
 
 
-##Skier Speed Analytics
+#Skier Speed Analytics
 
 To analyze skier speed we need to add some more data. While the pass data tracks the vertical rise of the chairlift ride, the descent, which is the actual skiing part, is to the base of the next chairlift. Base elevations are not supplied with the downloaded data so need to be added. We can get some more data from the [Master Development Plan](http://www.mtbachelor.com/site/about_us/company_info/forest_service/MDP_Text.pdf)
 
@@ -360,11 +367,13 @@ holidays_season = holidayNYSE(2005:2015)
 
 big_skier_record<-NULL
 
-for (pass in sample(valid_pass, 8)) {
+pass_sample<-sample(valid_pass, 8)
+
+for (pass in pass_sample) {
     ## read in the pass data
     
-    ##xxx<-sample(valid_pass,8)  # for debug
-    ##pass<-xxx[2]
+    ## xxx<-sample(valid_pass,8)  # for debug
+    ## pass<-pass_sample[1]
 
     print(pass)
     
@@ -377,12 +386,18 @@ for (pass in sample(valid_pass, 8)) {
     ski_runs$pass_id<-NULL
     ## hash the pass
     
-    ##ski_runs$pass<-digest(pass_s, algo="crc32")
-    ski_runs$pass<-pass_s
+    ski_runs$pass<-digest(pass_s, algo="crc32")
+    #ski_runs$pass<-pass_s
     
     
     #ski_runs$weekend<-isWeekend(ski_runs$date)
     ski_runs$holiday<-isHoliday(as.timeDate(ski_runs$date), holidays = holidays_season, wday = 1:5)
+    ## change to factor
+    ski_runs$holiday<-as.factor(ski_runs$holiday)
+    
+    ## rename to something in English
+    levels(ski_runs$holiday) <- c("weekday", "holiday or weekend")
+   
     #ski_runs$bizday<-isBizday(as.timeDate(ski_runs$date))
     
     ## add lookup data
@@ -492,6 +507,7 @@ q<-q+geom_histogram(binwidth=20,color="red")
 #q<- q + geom_density()
 q<-q+facet_grid(pass~holiday)
 q <- q + guides(color=guide_legend(nrow=10))
+
 print(q)
 
 
