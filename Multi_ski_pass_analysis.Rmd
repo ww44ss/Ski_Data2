@@ -716,7 +716,7 @@ Here is a sample of skier probabilities (expressed as logarithms) for a specific
     ## extract list of passes
     hashed_passes<-colnames(skier_probs)[-1]
     ## get a random sample
-    set.seed(8675309+1)
+    set.seed(8675309)
     sampled_pass<-sample(2:ncol(skier_probs),1)
 
     ## reduce the list
@@ -743,6 +743,9 @@ chair_probs<-NULL
 
 ski_day_prob_accumulator<-NULL
 
+set.seed(8675309)
+pass_sample<-sample(valid_pass, 50)
+
 for (pass in pass_sample){
     
     #pass<-pass_sample[1]  ## debug
@@ -768,7 +771,7 @@ for (pass in pass_sample){
         day_prob <- mean(ski_day$chair_p)
         
         ## filter out chort ski days
-        if (length(ski_day$chair_p) < 6 ) {day_prob <- 0}
+        if (length(ski_day$chair_p) < 6 ) {day_prob <- -0.01}
         
         ## hash the pass
         pass_s<-digest(pass, algo="xxhash32")
@@ -821,7 +824,7 @@ print(xtable(table_sample_print[1:10,]), type='html', comment=FALSE, include.row
 ## Select only a few passes to keep sane
 
     prob_junk<-ski_day_prob_accumulator[
-        (ski_day_prob_accumulator$pass == "28cd6f49" |
+        (ski_day_prob_accumulator$pass == sampled_pass_hashed |
             ski_day_prob_accumulator$pass == "71601c91" |
             ski_day_prob_accumulator$pass == "97824f8a" |
             ski_day_prob_accumulator$pass == "f3401388" |
@@ -829,14 +832,15 @@ print(xtable(table_sample_print[1:10,]), type='html', comment=FALSE, include.row
             ski_day_prob_accumulator$pass == "94078169"),
     ]
 
+print(head(prob_junk))
     
-    q<-ggplot(prob_junk, aes(10^(day_prob), ..density.., color=factor(pass)))
-    q<-q+geom_histogram(binwidth=.1, fill='grey51', position="dodge", alpha=0.3)
-    q <-q + geom_density()
-    q <- q + guides(color=guide_legend(nrow=10))
-    q <- q + ggtitle("Probability Histograms")
-    #q<-q+scale_x_continuous(limits=c(0, 1.1))
-    print(q)
+#     q<-ggplot(prob_junk, aes(10^(day_prob), ..density.., color=factor(pass)))
+#     q<-q+geom_histogram(binwidth=.1, fill='grey51', position="dodge", alpha=0.3)
+#     q <-q + geom_density()
+#     q <- q + guides(color=guide_legend(nrow=10))
+#     q <- q + ggtitle("Probability Histograms")
+#     #q<-q+scale_x_continuous(limits=c(0, 1.1))
+#     print(q)
 
     
 ```
