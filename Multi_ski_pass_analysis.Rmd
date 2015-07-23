@@ -369,7 +369,7 @@ holidays_season = holidayNYSE(2005:2015)
 
 big_skier_record<-NULL
 
-pass_sample<-sample(valid_pass, 10)
+pass_sample<-sample(valid_pass, 12)
 
 for (pass in pass_sample) {
     ## read in the pass data
@@ -509,113 +509,6 @@ print(q)
 
 With this insight we can look at the velocity statistics of individual skiers on specific chair lifts.
 
-```{r, "ski speed means", echo=FALSE}
-    
-    ## Use above method to calculate ski descent time and vertical / time
-    ## the general approach will be to calculate first for each run (chair ride),
-    ##      a start time, 
-    ##      a start elevation, an end time, and an end elevation. 
-    ##
-    ## from there can calculate for each run the vertical / time of the skier.
-    
-    ## to start we need to break down the data into individual ski days
-    
-    ## create data frame columns
-    ## since the end time of a run is the start time of the next run, we'll move 
-    ## the data over. We'll also need to duplicate the data from teh first run of the day 
-    ## assuming the day ends where it started. 
-# 
-# set.seed(8675309)
-# holidays_season = holidayNYSE(2005:2015)
-# 
-# big_skier_record<-NULL
-# 
-# ## for this calc sample a large number of passes
-# pass_sample<-sample(valid_pass, 100)  
-# 
-# for (pass in pass_sample) {
-#     ## read in the pass data
-#     
-#         ## pass<-pass_sample[1]   ## for debug
-#     ski_runs<-NULL
-#     
-#     ski_runs<-read.csv(paste0(Directory, pass))
-#     
-#         pass_s<-ski_runs$pass_id[1]
-#         ## suppress pass_id
-#         ski_runs$pass_id<-NULL
-#         ## hash the pass identity
-#         ski_runs$pass<-digest(pass_s, algo="crc32")
-#     
-#         ski_runs$holiday<-isHoliday(as.timeDate(ski_runs$date), holidays = holidays_season, wday = 1:5)
-#         ## change to factor
-#         ski_runs$holiday<-as.factor(ski_runs$holiday)
-#     
-#         ## rename to something in English
-#         levels(ski_runs$holiday) <- c("weekday", "holiday/weekend")
-#    
-#     ## add lookup data on vase vert and chair ride duration
-#     i<-cbind(match(ski_runs$chair, rownames(look_up)))
-#     
-#     ## add base elevationa and ride time columns to the data frame
-#     ski_runs<- cbind(ride_time=look_up[i,1], base_elev=look_up[i,2], ski_runs)
-# 
-#     ##get rid of junk columns
-#     ski_runs$vertical_meters<-NULL
-#     ##ski_runs$date<-NULL
-#     ski_runs$year<-NULL
-#     ski_runs$month<-NULL
-#     ski_runs$day<-NULL
-#     ski_runs$time_of_day<-NULL
-#     
-#     ski_runs$elev_end<-ski_runs$base_elev
-#     ski_runs$chair_combo<-as.character(ski_runs$chair)
-#     ski_runs$time_end<-as.character(ski_runs$time)
-#     
-#     ## do by holiday and non-holiday
-#     ski_days<-unique(ski_runs$holiday)
-#     
-#     for (days in ski_days) {
-#         
-#         ## get runs for specific day
-#         ss<-ski_runs[ski_runs$date==days,]
-#         
-#         ## calculate ski time
-#         
-#             ## define shift function
-#             shift2 <- function(x, n) c(tail(x, -n), rep(NA, n))
-#         
-#             end_elev<-ss$elev_end[1]
-#             ss<-transform(ss, elev_end = shift2(elev_end, 1))
-#             ss$elev_end[nrow(ss)]<-end_elev
-#             ss<-transform(ss, time_end = shift2(time_end, 1))
-#             ss<-transform(ss, chair_combo = shift2(chair_combo, 1))
-#         
-#             ## fix chair combo
-#             ss$chair_combo[nrow(ss)]<-as.character(ss$chair[1])
-#         
-#             ## calculate time
-#             ss$ski_time<-difftime(strptime(ss$time_end, "%Y-%m-%d %H:%M:%S"),strptime(ss$time, "%Y-%m-%d %H:%M:%S"), units = "mins" )
-#         
-#             ## calulate vertical feet/minute correcting for chairlift time
-#             ss$delta_vert<-ss$base_elev+ss$vertical_feet-ss$elev_end
-#         
-#             ss$ski_speed<-(ss$base_elev+ss$vertical_feet-ss$elev_end)/(as.numeric(ss$ski_time)-ss$ride_time)
-#             ss$chair_combo <- paste(ss$chair, as.character(ss$chair_combo))
-#         
-#         ski_start_stop<-rbind(ski_start_stop, ss)
-#         
-#     }
-#     
-#     
-#     
-#     big_skier_record<-rbind(big_skier_record, ski_start_stop)
-# }    
-
- 
-
-```
-
 
 
 
@@ -646,7 +539,10 @@ chair_probs<-NULL
         return(z)
     }
 
+    big_skier_record<-NULL
 
+    pass_sample<-sample(valid_pass, 40)
+    
     
     ## initialize some factors
     skier_probs<-NULL
@@ -715,21 +611,24 @@ Here is a sample of skier probabilities (expressed as logarithms) for a specific
 
     ## extract list of passes
     hashed_passes<-colnames(skier_probs)[-1]
-    ## get a random sample
-    set.seed(8675309)
+    ## get a random sample as reference
+    set.seed(8675309+3)
     sampled_pass<-sample(2:ncol(skier_probs),1)
 
-    ## reduce the list
+    ## reduce the list to the sampled pass
+    ## note this is the list of chairs and the probabilities.
     probs<-skier_probs[, c(1,sampled_pass)]
 
-    print(xtable(probs), type='html', comment=FALSE, include.rownames=FALSE, html.table.attributes='border="2" align="center" ' )
+    ## print it just so you know what it looks like
+    print(xtable(probs), type='html', comment=FALSE, include.rownames=FALSE, html.table.attributes='border="3" align="center" ' )
 
-
+    ## get the name of the pass
     sampled_pass_hashed<-colnames(probs)[2]
 
 
 ```
 
+The table above shows the probabilities for `r sampled_pass_hashed`.
 We can use the same lookup methodology.
 
 ```{r, echo=FALSE}
@@ -741,37 +640,40 @@ chair_probs<-NULL
 
 #pass_sample<-sample(valid_pass,60)  #uncomment to take a new sample
 
-ski_day_prob_accumulator<-NULL
+    ski_day_prob_accumulator<-NULL
 
-set.seed(8675309)
-pass_sample<-sample(valid_pass, 50)
+    #set.seed(8675309)
 
-for (pass in pass_sample){
+    ## get a smaple of valid passes
+    #pass_sample<-sample(valid_pass, 50)
+
+    for (pass in pass_sample){
     
-    #pass<-pass_sample[1]  ## debug
-    ## read the data
-    ski_runs<-read.csv(paste0(Directory, pass))
+        #pass<-pass_sample[1]  ## debug
+        ## read the data
+        ski_runs<-read.csv(paste0(Directory, pass))
     
-    ## fix Pine_Marten
-    ski_runs$chair<-gsub(" ", "_", ski_runs$chair)
+        ## fix Pine_Marten
+        ski_runs$chair<-gsub(" ", "_", ski_runs$chair)
     
-    dates<-unique(ski_runs$date)
+        ## get unique ski days
+        dates<-unique(ski_runs$date)
     
 
     
-    for (date in dates){
+            for (date in dates){
         
-        #date<-dates[3]  ## debug
+            #date<-dates[3]  ## debug
+            ski_day<- ski_runs[ski_runs$date == date, ]
         
-        ski_day<- ski_runs[ski_runs$date == date, ]
+            ## assign column lookup
+            ski_day$chair_p <- probs[match(ski_day$chair, probs$chair_list), 2]
         
-        ## asign column lookup
-        ski_day$chair_p <- probs[match(ski_day$chair, probs$chair_list), 2]
-        
-        day_prob <- mean(ski_day$chair_p)
+            ## calculate geometric mean (arthimetic mean of log)
+            day_prob <- mean(ski_day$chair_p)
         
         ## filter out chort ski days
-        if (length(ski_day$chair_p) < 6 ) {day_prob <- -0.01}
+        if (length(ski_day$chair_p) < 3 ) {day_prob <- -0.2}
         
         ## hash the pass
         pass_s<-digest(pass, algo="xxhash32")
@@ -795,7 +697,7 @@ for (pass in pass_sample){
     ski_day_prob_accumulator$color_code<-ski_day_prob_accumulator$pass==sampled_pass_hashed
 
     p <- ggplot(ski_day_prob_accumulator, aes(x=pass, y = 10^(day_prob), color=color_code))
-    p <- p + geom_point(size=3, alpha=0.2)
+    p <- p + geom_point(size=4, alpha=0.3)
     p <- p + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
     p <- p + ggtitle("References Day Probability")
     #p <- p + guides(color=guide_legend(nrow=5))
