@@ -9,7 +9,7 @@ output:
 ---
 
 #Summary  
-This analysis looks at skier data in the form of chairlift rides for individual ski pass holders. A few sample skier "days" for multiple seasons (05-06 to 14-15) are used to draw general conclusions about the capability of modeling in enhancing prediction of skier visits and chair lift rides.  
+This analysis looks at data on skier chairlift rides. A few sample skier "days" for multiple seasons (05-06 to 14-15) are used to draw general conclusions about the capability of modeling in enhancing prediction of skier visits and chair lift rides.  
 
 The analysis provides potential benefit to three groups:
 1. Area-management. Predictive models provide skier load anlaysis allowing better management of hill-side resources. Details of chair loading can be correlated to date, day, and time, weather conditions, snow conditions, etc. 
@@ -103,7 +103,7 @@ table {
     border-collapse: collapse;
     border-spacing: 10px;
     border-color: gray;
-    background-color: #a1b2c3;
+    background-color: #41a2b3;
     text-align: center
     font: 12px arial, sans-serif;
 }
@@ -233,8 +233,24 @@ Here's a representation of the skiers per day for the 14-15 Season.
     
     
      p2<-ggplot(skier_day_count_14_15, aes(x=as.Date(all_ski_days, "%Y-%m-%d"), y=normal_Freq, fill=wday))
-    p2<-p2+geom_bar(stat="identity")
-    p2 <- p2 + ggtitle("Skiers Per Day 12-13")
+    p2<-p2+geom_bar(stat="identity", position="stack")
+    p2 <- p2 + ggtitle("Skiers Per Day 14-15")
+    p2 <- p2 + xlab("date")
+    p2 <- p2 + ylab("normalized frequency")
+
+    print(p2)
+    
+    p2<-ggplot(skier_day_count_14_15, aes(x=season_week, y=normal_Freq, fill=wday))
+    p2<-p2+geom_bar(stat="identity", position="stack")
+    p2 <- p2 + ggtitle("Skiers Per Day 14-15")
+    p2 <- p2 + xlab("date")
+    p2 <- p2 + ylab("normalized frequency")
+
+    print(p2)
+    
+    p2<-ggplot(skier_day_count_14_15, aes(x=wday, y=normal_Freq, fill=season_week))
+    p2<-p2+geom_bar(stat="identity", position="dodge")
+    p2 <- p2 + ggtitle("Skiers Per Day 14-15")
     p2 <- p2 + xlab("date")
     p2 <- p2 + ylab("normalized frequency")
 
@@ -868,7 +884,7 @@ chair_probs<-NULL
         pass_s<-digest(pass, algo="xxhash32")
         
         ifelse(is.null(ski_day_prob_accumulator),
-                        ski_day_prob_accumulator<-data.frame("date"=as.character(date), "pass"= pass_s, "day_prob"=day_prob), ski_day_prob_accumulator<-rbind(ski_day_prob_accumulator,data.frame("date"=as.character(date), "pass"=pass_s, "day_prob"=day_prob)) 
+            ski_day_prob_accumulator<-data.frame("date"=as.character(date), "pass"= pass_s, "day_prob"=day_prob), ski_day_prob_accumulator<-rbind(ski_day_prob_accumulator,data.frame("date"=as.character(date), "pass"=pass_s, "day_prob"=day_prob)) 
                                          )
         
         
