@@ -13,7 +13,7 @@ This analysis looks at data on skier chairlift rides. A few sample skier "days" 
 
 The analysis provides potential benefit to three groups:
 1. Area-management. Predictive models provide skier load anlaysis allowing better management of hill-side resources. Details of chair loading can be correlated to date, day, and time, weather conditions, snow conditions, etc. 
-2. Area-managament and Area-users: Models can detect fraudulent pass use, protecting purchasers and area managment from fraud. 
+2. Management and Users: Models can detect fraudulent pass use, protecting purchasers and area managment from fraud. 
 3. Area-users: Analytics can provide insights to skiers on their performance and possibly enable marketing and other offers to tailor and optimize their on-hill and off-hill experience.
 
 The purpose is to explore the feasiblity and reliability with which skier visits can be predicted and analyzed for the benefit of the hill operator. 
@@ -103,7 +103,7 @@ table {
     border-collapse: collapse;
     border-spacing: 10px;
     border-color: gray;
-    background-color: #41a2b3;
+    background-color: #2192a3;
     text-align: center
     font: 12px arial, sans-serif;
 }
@@ -113,7 +113,7 @@ th, td {
 }
 </style>
  
-Just to give a flavor for the data, here is a sample of ski runs for an individual skier. Note that the sample spans multiple years.  
+Just to give a flavor for the data, here is a sample of ski runs for an individual skier. Note the sample spans multiple years.  
 
 
 ```{r, echo=FALSE, results='asis', fig.align='center'}
@@ -127,12 +127,12 @@ for (pass in sample(valid_pass, 1)) {
     
     ## suppress pass_id
     ski_runs$pass_id<-NULL
-    
+    ## hash the pass number
     ski_runs$pass<-digest(ski_runs$pass, algo="crc32")
 }
 
 print(xtable(ski_runs[ordered_sample(ski_runs, 9),]), type='html', comment=FALSE, include.rownames=FALSE, 
-      html.table.attributes='border="2" align="center" ' )
+      html.table.attributes='border="3" align="center" ' )
 
 ```
 
@@ -231,11 +231,19 @@ Here's a representation of the skiers per day for the 14-15 Season.
 
 ```{r, "skiers per day series plot 1415",echo=FALSE, results='asis', fig.align='center', fig.height=3, fig.width=8}
     
+    c_yellow<-"#FDF697"
+    c_turquoise<-"#00F1EB"
+    c_red<-"#F1888D"
+    c_orange<-"#F99F7A"
+    c_yellow2<-"#F8E888"
+    c_turquoise2 <- "#56B4BE"
     
      p2<-ggplot(skier_day_count_14_15, aes(x=as.Date(all_ski_days, "%Y-%m-%d"), y=normal_Freq, fill=wday))
     p2<-p2+geom_bar(stat="identity", position="stack")
     p2 <- p2 + ggtitle("Skiers Per Day 14-15")
     p2 <- p2 + xlab("date")
+    p2 <- p2 + coord_cartesian(xlim = c(as.Date("2015-05-31", "%Y-%m-%d"),as.Date("2014-11-01", "%Y-%m-%d"))) 
+    
     p2 <- p2 + ylab("normalized frequency")
 
     print(p2)
@@ -243,21 +251,13 @@ Here's a representation of the skiers per day for the 14-15 Season.
     p2<-ggplot(skier_day_count_14_15, aes(x=season_week, y=normal_Freq, fill=wday))
     p2<-p2+geom_bar(stat="identity", position="stack")
     p2 <- p2 + ggtitle("Skiers Per Day 14-15")
-    p2 <- p2 + xlab("date")
+    p2 <- p2 + xlab("ski season week")
+    p2 <- p2 + coord_cartesian(xlim = c(0, 30)) 
     p2 <- p2 + ylab("normalized frequency")
 
     print(p2)
     
-    p2<-ggplot(skier_day_count_14_15, aes(x=wday, y=normal_Freq, fill=season_week))
-    p2<-p2+geom_bar(stat="identity", position="dodge")
-    p2 <- p2 + ggtitle("Skiers Per Day 14-15")
-    p2 <- p2 + xlab("date")
-    p2 <- p2 + ylab("normalized frequency")
 
-    print(p2)
-    
-   
-    
     
 
 ```
@@ -275,11 +275,16 @@ Here's a representation of the skiers per day for the 14-15 Season.
     ## reorder weekday factor
     skier_day_count_14_15$wday <- ordered(skier_day_count_14_15$wday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
     
-    print(xtable(skier_day_count_14_15[1:10,c(1,5,6,9,10)]), type='html', comment=FALSE, include.rownames=FALSE, html.table.attributes='border="2" align="center" ' )
+   # print(xtable(skier_day_count_14_15[1:10,c(1,5,6,9,10)]), type='html', comment=FALSE, include.rownames=FALSE, html.table.attributes='border="2" align="center" ' )
     
 ```
 
-```{r, echo=FALSE, fig.align="center", fig.width=8, fig.height=6}
+```{r}
+    print(head(skier_day_count_14_15))
+    
+```
+
+```{r, echo=FALSE, fig.align="center", fig.width=6, fig.height=4}
     
      skier_day_count_14_15$indx <- 1:nrow(skier_day_count_14_15)
     
@@ -299,21 +304,105 @@ Here's a representation of the skiers per day for the 14-15 Season.
     
     ```
 
-```{r, "skiers per day series plot1314",echo=FALSE, results='asis', fig.align='center', fig.height=3, fig.width=8}
+
+###12-13 Season Comparison
+
+Here's a representation of the skiers per day for the 12-13 Season. 
+
+
+
+```{r, "skiers per day series plot 1213x",echo=FALSE, results='asis', fig.align='center', fig.height=3, fig.width=8}
     
+    c_yellow<-"#FDF697"
+    c_turquoise<-"#00F1EB"
+    c_red<-"#F1888D"
+    c_orange<-"#F99F7A"
+    c_yellow2<-"#F8E888"
+    c_turquoise2 <- "#56B4BE"
     
-     p2<-ggplot(skier_day_count_13_14, aes(x=as.Date(all_ski_days, "%Y-%m-%d"), y=normal_Freq, fill=wday))
-    p2<-p2+geom_bar(stat="identity")
-    p2 <- p2 + ggtitle("Skiers Per Day 13-14")
+     p2<-ggplot(skier_day_count_12_13, aes(x=as.Date(all_ski_days, "%Y-%m-%d"), y=normal_Freq, fill=wday))
+    p2<-p2+geom_bar(stat="identity", position="stack")
+    p2 <- p2 + ggtitle("Skiers Per Day 12-13")
     p2 <- p2 + xlab("date")
+    p2 <- p2 + coord_cartesian(xlim = c(as.Date("2012-11-01", "%Y-%m-%d"),as.Date("2013-06-01", "%Y-%m-%d"))) 
+    
     p2 <- p2 + ylab("normalized frequency")
 
     print(p2)
     
-   
-    
+    p2<-ggplot(skier_day_count_12_13, aes(x=season_week, y=normal_Freq, fill=wday))
+    p2<-p2+geom_bar(stat="identity", position="stack")
+    p2 <- p2 + ggtitle("Skiers Per Day 12-13")
+    p2 <- p2 + xlab("ski season week")
+    p2 <- p2 + coord_cartesian(xlim = c(0, 30)) 
+    p2 <- p2 + ylab("normalized frequency")
+
+    print(p2)
     
 
+    
+
+```
+
+```{r, echo=FALSE, results='asis'}
+    
+    
+    ## order the si days by normalized frequency
+    skier_day_count_12_13<-skier_day_count_12_13[order(skier_day_count_12_13$normal_Freq, decreasing = TRUE),]
+    
+    skier_cum <- cumsum(skier_day_count_12_13$normal_Freq) 
+    
+    skier_day_count_12_13<-cbind(skier_day_count_12_13, skier_cum)
+    
+    ## reorder weekday factor
+    skier_day_count_12_13$wday <- ordered(skier_day_count_12_13$wday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+    
+   # print(xtable(skier_day_count_14_15[1:10,c(1,5,6,9,10)]), type='html', comment=FALSE, include.rownames=FALSE, html.table.attributes='border="2" align="center" ' )
+    
+```
+
+```{r}
+    print(head(skier_day_count_12_13))
+    
+```
+
+
+
+```{r, echo=FALSE, fig.align="center", fig.width=6, fig.height=4}
+    
+     skier_day_count_12_13$indx <- 1:nrow(skier_day_count_12_13)
+     print(head(skier_day_count_12_13, 20))
+    
+     p3<-ggplot(skier_day_count_12_13, aes(x=indx, y = skier_day_count_12_13$skier_cum/(max(skier_day_count_12_13$skier_cum))))
+     p3 <- p3 + geom_line(size = 1, color = "blue")
+     p3 <- p3 + geom_point(aes(y = skier_day_count_12_13$normal, color=wday))
+     p3 <- p3 + ggtitle("Season 12-13 Skier Day Pop Distribution")
+     p3 <- p3 + xlab("ski day index")
+     p3 <- p3 + ylab("population max and cummulative fraction")
+     p3 <- p3 + theme(legend.title=element_blank())
+     p3 <- p3 + scale_color_manual(values=c("#99CC00", "#99FF00","#66FF66", "#669900","#999000", "#FF9900", "#FF6600"))
+
+     print(p3)
+
+ 
+    
+```
+
+```{r, echo=FALSE, fig.align="center", fig.width=6, fig.height=4}
+    
+    
+     p3<-ggplot(skier_day_count_12_13, aes(x=wday, y = normal_Freq))
+     p3 <- p3 + geom_violin(fill="lightblue")+geom_point(size=3, color="darkblue")
+     p3 <- p3 + ggtitle("Season 12-13 Skier Day Pop Distribution")
+     p3 <- p3 + xlab("ski day index")
+     p3 <- p3 + ylab("population max and cummulative fraction")
+     p3 <- p3 + theme(legend.title=element_blank())
+     #p3 <- p3 + scale_color_manual(values=c("#99CC00", "#99FF00","#66FF66", "#669900","#999000", "#FF9900", "#FF6600"))
+
+     print(p3)
+
+ 
+    
 ```
 
 ###12-13 Season  
@@ -345,7 +434,7 @@ Next, let's explore looking at daily total runs and vertical feet.
 
 Here is a sample of the data for total runs per day per skier.
 
-```{r, "runs_per_day",echo=FALSE, results='asis', fig.align='center'}
+```{r, "runs_per_day 1213",echo=FALSE, results='asis', fig.align='center'}
 set.seed(8675309)
 big_skier_record<-NULL
 
