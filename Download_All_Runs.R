@@ -16,7 +16,7 @@
         }
         
         ## rip them off
-        for (i in 1:15) Season[i] <- seasonfunction(i)
+        for (i in 1:16) Season[i] <- seasonfunction(i)
         
         
 
@@ -27,11 +27,14 @@
     
     for(PassIndex in pass_sample){
         ## assign pass
+        ## Pass<-"MBA6360970"
         Pass<-as.character(valid_pass$pass[PassIndex])
         ## clear skier record
         skier_day_record<-NULL
-        cat("getting data for pass ", Pass, "\n")    
-        for (j in 6:15) { 
+        cat("getting data for pass ", Pass, "\n")  
+        
+        ##loop thru years. Note the number corresponds to last date in season (e.g. j=12 ~ season = "11-12")
+        for (j in 13:16) { 
             ## wait time of 1 to 2 secs between queries to not overwhelm server
             Sys.sleep(1.0*runif(1)+1.)
             ##MAKE THE HYPERLINK
@@ -82,15 +85,25 @@
         
             ## create a column of Pass for later id
             pass_id <- rep(Pass, dim(ski_day_data)[1])
+            season <- rep(Season[j], dim(ski_day_data)[1])
         
             ## bind to date
         
-            ski_day_data<-cbind(pass_id, ski_day_data, ski_data_links)
+            ski_day_data<-cbind(pass_id, season, ski_day_data, ski_data_links)
             ## name columns
-            colnames(ski_day_data)<-c("pass_id","date", "link")
+            colnames(ski_day_data)<-c("pass_id","season", "date", "link")
         
             skier_day_record<-rbind(skier_day_record, ski_day_data)
         }
+        
+        ##the data look like this
+        #      pass_id season       date                                                                                            link
+#         1 MBA6360970  12-13 12/16/2012 http://track.mtbachelor.com/tyt.asp?passmediacode=MBA6360970&season=12-13&currentday=12/16/2012
+#         2 MBA6360970  12-13 12/21/2012 http://track.mtbachelor.com/tyt.asp?passmediacode=MBA6360970&season=12-13&currentday=12/21/2012
+#         3 MBA6360970  12-13 12/27/2012 http://track.mtbachelor.com/tyt.asp?passmediacode=MBA6360970&season=12-13&currentday=12/27/2012
+#         4 MBA6360970  12-13 12/28/2012 http://track.mtbachelor.com/tyt.asp?passmediacode=MBA6360970&season=12-13&currentday=12/28/2012
+#         5 MBA6360970  12-13   1/4/2013 http://track.mtbachelor.com/tyt.asp?passmediacode=MBA6360970&season=12-13&currentday=01/04/2013
+#         6 MBA6360970  12-13   1/5/2013 http://track.mtbachelor.com/tyt.asp?passmediacode=MBA6360970&season=12-13&currentday=01/05/2013
 
         ## GET THE SKI RUN DATA FROM INDIVIDUAL SKI DAYS
         number_of_ski_days<-1:dim(skier_day_record)[1]
@@ -131,6 +144,9 @@
                           dimnames=list(1:(length(runs_data)/4),c("time", "chair", "vertical_feet", "vertical_meters")))
             ## convert to data frame
             runs_data<-as.data.frame(runs_data)
+            
+            ## Add a season column
+            runs_data$season<-rep(skier_day_record$season[k], nrow(runs_data))
         
             ## clean up the data frame
         
@@ -148,10 +164,16 @@
                 runs_data$date<-strftime(runs_data$time, format="%Y-%m-%d")
                 runs_data$pass_id<-rep(skier_day_record$pass_id[k], dim(runs_data)[1])
         
+                
                 every_ski_run<-rbind(every_ski_run, runs_data)
             }
         
-        
+#        The data will look like this
+#                           time       chair vertical_feet vertical_meters season year month day time_of_day       date    pass_id
+#         1  2012-12-16 09:08:05 Pine Marten          1367             416  12-13 2012    12  16    09:08:05 2012-12-16 MBA6360970
+#         2  2012-12-16 09:28:44 Pine Marten          1367             416  12-13 2012    12  16    09:28:44 2012-12-16 MBA6360970
+#         3  2012-12-16 09:54:01    Skyliner          1306             398  12-13 2012    12  16    09:54:01 2012-12-16 MBA6360970
+#         4  2012-12-16 10:10:17 Pine Marten          1367             416  12-13 2012    12  16    10:10:17 2012-12-16 MBA6360970       
         ## condition data to get file ready to save
         every_ski_run$time<-as.character(every_ski_run$time)
         every_ski_run$chair<-as.character(every_ski_run$chair)

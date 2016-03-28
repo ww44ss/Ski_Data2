@@ -92,7 +92,27 @@ ordered_sample <- function(dataframe, n=6) {
 
 ```
 
+```{r "base elevations", echo=FALSE}
 
+    ## Create matrix which has chair name, base elevation, and ride time in it.
+    ## these values came from published data
+
+    ## Data input
+    ## base elev is in feet
+    base_elev <- as.integer(c(6477,  6405,  6335, 7248, 6389, 6379, 6344, 5983,  5709))
+    
+    chair_names<-c("Sunrise","Rainbow","Skyliner","Summit","Sunshine", "Pine Marten","Red" , "Outback" , "Northwest" )
+    
+    ## ride time is in minutes
+    ride_time <- c(4.2, 11.03,  5.97, 4.67, 2.13, 4.85, 8.46, 7.01,  8.38)
+    
+    ## create look_up table for base and ride time data by chairlift
+    look_up <- matrix(c(ride_time, base_elev), 9,2, dimnames=list(chair_names, c("ride_time", "base_elev")))
+    
+    ## index it to the ski_runs
+   
+
+```
  
 ##Raw Data
 
@@ -362,7 +382,25 @@ Here's a representation of the skiers per day for the 12-13 Season.
 ```
 
 ```{r}
-    print(head(skier_day_count_12_13))
+    #print(head(skier_day_count_12_13))
+    
+    
+##      all_ski_days Freq week yday season_week     wday year season
+## 1419   2013-02-24   79    8   54          17   Sunday 2013  12-13
+## 1418   2013-02-23   71    8   53          17 Saturday 2013  12-13
+## 1461   2013-04-07   65   14   96          23   Sunday 2013  12-13
+## 1370   2013-01-06   63    1    5          10   Sunday 2013  12-13
+## 1336   2012-12-02   60   49  336           5   Sunday 2012  12-13
+## 1391   2013-01-27   60    4   26          13   Sunday 2013  12-13
+##      normal_Freq skier_cum
+## 1419   1.0000000  1.000000
+## 1418   0.8987342  1.898734
+## 1461   0.8227848  2.721519
+## 1370   0.7974684  3.518987
+## 1336   0.7594937  4.278481
+## 1391   0.7594937  5.037975    
+    
+    
     
 ```
 
@@ -371,7 +409,6 @@ Here's a representation of the skiers per day for the 12-13 Season.
 ```{r, echo=FALSE, fig.align="center", fig.width=6, fig.height=4}
     
      skier_day_count_12_13$indx <- 1:nrow(skier_day_count_12_13)
-     print(head(skier_day_count_12_13, 20))
     
      p3<-ggplot(skier_day_count_12_13, aes(x=indx, y = skier_day_count_12_13$skier_cum/(max(skier_day_count_12_13$skier_cum))))
      p3 <- p3 + geom_line(size = 1, color = "blue")
@@ -392,7 +429,7 @@ Here's a representation of the skiers per day for the 12-13 Season.
     
     
      p3<-ggplot(skier_day_count_12_13, aes(x=wday, y = normal_Freq))
-     p3 <- p3 + geom_violin(fill="lightblue")+geom_point(size=3, color="darkblue")
+     p3 <- p3 + geom_boxplot(fill="#307696")+geom_point(size=3, color="#3c3c32")
      p3 <- p3 + ggtitle("Season 12-13 Skier Day Pop Distribution")
      p3 <- p3 + xlab("ski day index")
      p3 <- p3 + ylab("population max and cummulative fraction")
@@ -440,7 +477,7 @@ big_skier_record<-NULL
 
 holidays_season = holidayNYSE(2005:2015)
 
-pass_sample <- sample(valid_pass, 23)
+pass_sample <- sample(valid_pass, 15)
 
 for (pass in pass_sample ) {
     ## read in the pass data
@@ -461,6 +498,7 @@ for (pass in pass_sample ) {
                         week = as.POSIXlt(date)$yday %/% 7 + 1,
                         season_week = (as.POSIXlt(date)$yday+31)%%365 %/% 7+1,
                         wday = as.POSIXlt(date)$wday,
+                        mon=as.POSIXlt(date)$mon,
                         year = as.POSIXlt(date)$year+1900,
                         weekend<-isWeekend(date),
                         holiday<-isHoliday(as.timeDate(date), holidays = holidays_season),
@@ -469,7 +507,7 @@ for (pass in pass_sample ) {
 
     
     
-    colnames(runs_per_day)<-c("runs_per_day","date", "pass","week","season_week" ,"wday", "year", "weekend", "holiday", "bizday")
+    colnames(runs_per_day)<-c("runs_per_day","date", "pass","week","season_week" ,"wday", "mon", "year", "weekend", "holiday", "bizday")
     
     runs_per_day$year<-as.integer(runs_per_day$year)
     runs_per_day$week<-as.integer(runs_per_day$week)
@@ -499,15 +537,15 @@ print(xtable(big_skier_record[ordered_sample(big_skier_record, 9),]), type='html
   
 From random sample of data from `r length(pass_sample)` out of the `r length(valid_pass)` skiers a graph below show that runs per skier are fairly consistent from season to season.  
 
-```{r, echo=FALSE, fig.align="center", fig.height=5, fig.width=10}
+```{r, echo=FALSE, warning=FALSE, fig.align="center", fig.height=5, fig.width=10}
 
  
 p<-ggplot(big_skier_record, aes(x = pass, y= runs_per_day, colour=factor(season))) 
-p<-p+geom_boxplot(outlier.colour = NULL)
+p<-p+geom_boxplot(outlier.colour = "salmon", notch=FALSE)
 p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p<-p+ggtitle("pattern of daily runs by skier")
 p <- p + guides(color=guide_legend(nrow=5))
-p <- p+ labs(x="skier (hashed)", y = "daily vertical (feet)")
+p <- p+ labs(x="skier (hashed)", y = "runs per day (feet)")
 print(p)
  
 ```
@@ -522,7 +560,7 @@ big_skier_record<-NULL
 
 holidays_season = holidayNYSE(2005:2015)
 
-pass_sample<-sample(valid_pass, 8)
+pass_sample<-sample(valid_pass, 15)
 
 for (pass in pass_sample) {
     ## read in the pass data
@@ -591,7 +629,7 @@ There appears to be pretty good distinction between individual skiers. We can al
 
  
 p<-ggplot(big_skier_record, aes(x = pass, y= total_vertical, colour=factor(season))) 
-p<-p+geom_boxplot(outlier.colour = NULL)
+p<-p+geom_boxplot(outlier.colour = "#F432A3")
 p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p<-p+ggtitle("pattern of daily vertical feet by skier")
 p <- p + guides(color=guide_legend(nrow=5))
@@ -610,7 +648,7 @@ q<-q+geom_density()
 q <- q + guides(color=guide_legend(nrow=10))
 q<-q+ggtitle("Daily Vert Shows Strong Skier Dependence")
 q<-q+scale_x_continuous(limits=c(0, 30000))
-print(q)
+#print(q)
 
 
 
@@ -619,28 +657,9 @@ print(q)
 
 #Skier Speed Analytics
 
-To analyze skier speed we need to add some more data. While the pass data tracks the vertical rise of the chairlift ride, the descent, which is the actual skiing part, is to the base of the next chairlift. Base elevations are not supplied with the downloaded data so need to be added. We can get some more data from the [Master Development Plan](http://www.mtbachelor.com/site/about_us/company_info/forest_service/MDP_Text.pdf)
+We need to add some more data to analysze skier speed. While the pass data tracks the vertical rise of the chairlift ride, the descent, which is the actual skiing part, is to the base of the next chairlift. Base elevations are not supplied with the downloaded data so need to be added. We can get some more data from the [Master Development Plan](http://www.mtbachelor.com/site/about_us/company_info/forest_service/MDP_Text.pdf) and [Google Maps](https://www.google.com/maps/place/Bend,+OR/@43.9900942,-121.6978057,14.07z/)
 
-```{r "base elevations", echo=FALSE}
 
-    ## Add base elevation and nominal chairlift ride time to the data
-
-    ## Data input
-    ## base elev is in feet
-    base_elev <- as.integer(c(6477,  6405,  6335, 7248, 6389, 6379, 6344, 5983,  5709))
-    
-    chair_names<-c("Sunrise","Rainbow","Skyliner","Summit","Sunshine", "Pine Marten","Red" , "Outback" , "Northwest" )
-    
-    ## ride time is in minutes
-    ride_time <- c(4.2, 11.03,  5.97, 4.67, 2.13, 4.85, 8.46, 7.01,  8.38)
-    
-    ## create look_up table for base and ride time data by chairlift
-    look_up <- matrix(c(ride_time, base_elev), 9,2, dimnames=list(chair_names, c("ride_time", "base_elev")))
-    
-    ## index it to the ski_runs
-   
-
-```
 
 ```{r, "ski descent time", echo=FALSE}
     
@@ -657,13 +676,14 @@ To analyze skier speed we need to add some more data. While the pass data tracks
     ## since the end time of a run is the start time of the next run, we'll move 
     ## the data over. We'll also need to duplicate the data from teh first run of the day 
     ## assuming the day ends where it started. 
-
+require(timeDate)
+    
 set.seed(8675309)
 holidays_season = holidayNYSE(2005:2015)
 
 big_skier_record<-NULL
 
-pass_sample<-sample(valid_pass, 12)
+pass_sample<-sample(valid_pass, 15)
 
 for (pass in pass_sample) {
     ## read in the pass data
@@ -740,7 +760,9 @@ for (pass in pass_sample) {
         ss$delta_vert<-ss$base_elev+ss$vertical_feet-ss$elev_end
         
         ss$ski_speed<-(ss$base_elev+ss$vertical_feet-ss$elev_end)/(as.numeric(ss$ski_time)-ss$ride_time)
-        ss$chair_combo <- paste(ss$chair, as.character(ss$chair_combo))
+        
+        ss$destination <- as.character(ss$chair_combo)
+        ss$chair_combo <- paste("->", as.character(ss$chair_combo))
         
         ski_start_stop<-rbind(ski_start_stop, ss)
         
@@ -752,12 +774,30 @@ for (pass in pass_sample) {
 }    
 
  
+## add some weekday information
+require(timeDate)
+holidays_season = holidayNYSE(2005:2015)
+
+
+big_skier_record <- transform(big_skier_record,
+                        week = as.POSIXlt(date)$yday %/% 7 + 1,
+                        season_week = (as.POSIXlt(date)$yday+31)%%365 %/% 7+1,
+                        wday = as.POSIXlt(date)$wday,
+                        year = as.POSIXlt(date)$year+1900)
+#,
+#                        weekend<-as.logical(isWeekend(as.POSIXlt(date))),
+#                        holiday<-as.logical(isHoliday(as.timeDate(date), holidays = holidays_season)),
+#                        bizday<-as.logical(isBizday(as.timeDate(date), holidays = holidays_season, wday=1:5))
+#)
+
+big_skier_record$weekend<-as.logical(isWeekend(as.POSIXlt(big_skier_record$date)))
+big_skier_record$holiday_2<-as.logical(isHoliday(as.timeDate(big_skier_record$date), holidays = holidays_season))
+big_skier_record$bizday<-as.logical(isBizday(as.timeDate(big_skier_record$date), holidays = holidays_season, wday=1:5))
+
 
 ```
 
-So let's look at ski speed to see if more related to a skier or to a ski run.  
-Calculated ski times that are below the chairlift ride time result in "negative" speeds and are anomalous. It will be worth looking at these in more detail, because they appear to occur for some users and not others. In some cases it appears that riders may have checked in to, say Summit, but then decided to ski a different lift.
-In the graph below ski speeds are shown as distributions for weekends/holidays and weekdays. 
+Ski run speed is affected by lots of factors, including the path chosen and terrain. To examine this we'll look at the distrubution of runs split by chair lift and destination. 
 
 
 
@@ -769,47 +809,82 @@ In the graph below ski speeds are shown as distributions for weekends/holidays a
     big_skier_record<-big_skier_record[big_skier_record$ski_speed>0,]
     big_skier_record<-big_skier_record[big_skier_record$ski_speed<600,]
 
-```
-
-```{r, echo=FALSE, fig.align="center", fig.height=7, fig.width=10}
-
- ## filter negative values out
- 
- 
- 
-p<-ggplot(big_skier_record, aes(x = pass, y= ski_speed)) 
-p<-p+geom_boxplot(outlier.colour = "red")
-p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-p<-p+ggtitle("pattern of skier speed")
-p <- p + guides(color=guide_legend(nrow=15))
-p <- p+ labs(x="skier (hashed)", y = "ski speed (vertical feet/minute)")
-#print(p)
- 
+    #print(head(big_skier_record))
 ```
 
 ```{r, echo=FALSE, fig.align="center", fig.height=10, fig.width=10}
 
-q<-ggplot(big_skier_record, aes(ski_speed, fill=factor(chair), y=..density..))
-q<-q+geom_histogram(binwidth=20,color="red")
-#q<- q + geom_density()
-q<-q+facet_grid(pass~holiday)
-q <- q + guides(color=guide_legend(nrow=10))
-
-print(q)
-
-
-
+p<-ggplot(big_skier_record, aes(x = pass, y= ski_speed)) 
+p<-p+geom_boxplot(outlier.colour = "darkblue")
+p<-p+facet_grid(chair_combo~chair)
+p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p<-p+ggtitle("pattern of skier speed")
+p <- p + guides(color=guide_legend(nrow=15))
+p <- p+ labs(x="skier id", y = "ski speed (vertical feet/minute)")
+print(p)
+ 
 ```
 
-With this insight we can look at the velocity statistics of individual skiers on specific chair lifts.
+
+As might be expected, there's a lot of variation in the speed. While some runs, such as Pine Marten to Summit, show almost uniform variation, the steeper runs returning to the same chairlift show the most data and most consisent variation. 
+
+Here'a a detailed look at a some chairlifts.
+
+```{r, echo=FALSE, fig.align="center", fig.height=5, fig.width=7}
+
+chair_filter<-"Pine Marten"
 
 
+p<-ggplot(big_skier_record[big_skier_record$chair==chair_filter&big_skier_record$destination==chair_filter,], aes(x = pass, y= ski_speed)) 
+p<-p+geom_boxplot(outlier.colour = "darkblue", fill = "#56F33E")
+#p<-p+facet_grid(chair_combo~chair)
+p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p<-p+ggtitle(paste("pattern of skier speed - ", chair_filter))
+p <- p + guides(color=guide_legend(nrow=15))
+p <- p+ labs(x="skier id", y = "ski speed (vertical feet/minute)")
+print(p)
+ 
+```
 
+For the lift `r chair_filter` there are `r nrow(big_skier_record[big_skier_record$chair==chair_filter&big_skier_record$destination==chair_filter,])` total runs for `r length(unique(big_skier_record[big_skier_record$chair==chair_filter&big_skier_record$destination==chair_filter,]$pass))` skiers.
+
+```{r, echo=FALSE, fig.align="center", fig.height=5, fig.width=7}
+
+chair_filter<-"Summit"
+
+p<-ggplot(big_skier_record[big_skier_record$chair==chair_filter&big_skier_record$destination==chair_filter,], aes(x = pass, y= ski_speed)) 
+p<-p+geom_boxplot(outlier.colour = "darkblue", fill = "#F33E56")
+#p<-p+facet_grid(chair_combo~chair)
+p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p<-p+ggtitle(paste("pattern of skier speed - ", chair_filter))
+p <- p + guides(color=guide_legend(nrow=15))
+p <- p+ labs(x="skier id", y = "ski speed (vertical feet/minute)")
+print(p)
+ 
+```
+
+For the lift `r chair_filter` there are `r nrow(big_skier_record[big_skier_record$chair==chair_filter&big_skier_record$destination==chair_filter,])` total runs for `r length(unique(big_skier_record[big_skier_record$chair==chair_filter&big_skier_record$destination==chair_filter,]$pass))` skiers.
+
+```{r, echo=FALSE, fig.align="center", fig.height=5, fig.width=7}
+
+chair_filter<-"Northwest"
+
+p<-ggplot(big_skier_record[big_skier_record$chair==chair_filter&big_skier_record$destination==chair_filter,], aes(x = pass, y= ski_speed)) 
+p<-p+geom_boxplot(outlier.colour = "darkblue", fill = "#3E56F3")
+#p<-p+facet_grid(chair_combo~chair)
+p<-p+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p<-p+ggtitle(paste("pattern of skier speed - ", chair_filter))
+p <- p + guides(color=guide_legend(nrow=15))
+p <- p+ labs(x="skier id", y = "ski speed (vertical feet/minute)")
+print(p)
+ 
+```
+
+For the lift `r chair_filter` there are `r nrow(big_skier_record[big_skier_record$chair==chair_filter&big_skier_record$destination==chair_filter,])` total runs for `r length(unique(big_skier_record[big_skier_record$chair==chair_filter&big_skier_record$destination==chair_filter,]$pass))` skiers.
 
 #Chairlift Choice
 
-Another preference individual skiers have is for specific chairlifts. Let's see if this can contribute to behavioral classification. To do this we'll adopt a simple model of unigram maximum likelhood estimators.
-Here are the frequencies of charlift rides for a sample of skiers.  
+Another preference individual skiers have is for specific chairlifts. Let's see if this can contribute to behavioral classification. To do this we'll adopt a simple model looking at charilift patterns.
 
 ```{r, "chairlift unigram", echo=FALSE}
 
@@ -821,12 +896,12 @@ chair_probs<-NULL
 
     ## Function Chair Probs
     ## Passes a chair list and a ride list. 
-    ## Counts the number of elements in the ride list corresponding to the chair list. 
+    ## Counts the number of elements in the ride list corresponding to the chair list.
     chair_probs <- function(ride_list, chair_list){
         rides <- factor(ride_list, levels= chair_list)
         rides<-as.data.frame.table(table(rides))
         total_rides<-sum(rides$Freq)
-        z<-as.data.frame(log10((rides$Freq+0.5)/(total_rides+0.5*length(chair_list))))
+        z<-as.data.frame((rides$Freq+0.5)/(total_rides+0.5*length(chair_list)))
         
         rownames(z)<-rides$rides
         
@@ -846,10 +921,11 @@ chair_probs<-NULL
     skier_probs<-as.data.frame(chair_list)
 
     
-    for (pass in pass_sample) {
+for (pass in pass_sample) {
     ## read in the pass data
     
     #pass<-pass_sample[2]   ## for debug
+    #pass<-pass_sample[4]
     ski_runs<-NULL
     
     ski_runs<-read.csv(paste0(Directory, pass))
@@ -867,18 +943,87 @@ chair_probs<-NULL
     
     colnames(prob)<-pass_s
     
+    ##handle exception on first pass
     if (!is.null(skier_probs)) {skier_probs <- cbind(skier_probs, prob)} else {skier_probs<-prob}
     
 }
-
+# this is what skier_probs looks like
+#              chair_list    e269d585   cef2cd00    4e6b546f    75627e6a    87bf2089     7ed30ddf   125732b8    ab7f3446
+# Sunrise         Sunrise 0.024817518 0.20666959 0.156342183 0.082519965 0.003444317 0.2911328812 0.09645581 0.039142091
+# Rainbow         Rainbow 0.001459854 0.12242211 0.026548673 0.025732032 0.005740528 0.0434564180 0.03364738 0.016621984
+# Skyliner       Skyliner 0.205839416 0.17683194 0.185840708 0.378881988 0.382319173 0.1921627732 0.09825034 0.154959786
+# Summit           Summit 0.191240876 0.04695042 0.020648968 0.066548358 0.200918485 0.0364230093 0.17720951 0.082037534
+# Sunshine       Sunshine 0.001459854 0.01974550 0.274336283 0.013309672 0.001148106 0.0183371012 0.01929116 0.002680965
+# Pine_Marten Pine_Marten 0.278832117 0.29179465 0.268436578 0.338065661 0.265212400 0.3026877669 0.26155227 0.468096515
+# Red                 Red 0.001459854 0.00833699 0.002949853 0.002661934 0.001148106 0.0002511932 0.01121579 0.002680965
+# Outback         Outback 0.045255474 0.05484862 0.026548673 0.031055901 0.003444317 0.0565184627 0.11440108 0.094906166
+# Northwest     Northwest 0.249635036 0.07240018 0.038348083 0.061224490 0.136624569 0.0590303944 0.18797667 0.138873995    
+    
 ## finally melt the 
 skier_probs_melted<-melt(skier_probs, variable.name="pass")
 
+
+
 ```
+
+```{r, echo=FALSE, fig.align="center", fig.height=4, fig.width=7}
+## this chunk calculates the rms difference in probabilities of skiers
+
+pass_count<-ncol(skier_probs)
+
+# skier probs looks like this
+#              chair_list   cef2cd00    4e6b546f    75627e6a
+# Sunrise         Sunrise 0.20666959 0.156342183 0.082519965
+# Rainbow         Rainbow 0.12242211 0.026548673 0.025732032
+# Skyliner       Skyliner 0.17683194 0.185840708 0.378881988
+# Summit           Summit 0.04695042 0.020648968 0.066548358
+# Sunshine       Sunshine 0.01974550 0.274336283 0.013309672
+# Pine_Marten Pine_Marten 0.29179465 0.268436578 0.338065661
+# Red                 Red 0.00833699 0.002949853 0.002661934
+# Outback         Outback 0.05484862 0.026548673 0.031055901
+# Northwest     Northwest 0.07240018 0.038348083 0.061224490
+
+t<-skier_probs
+t<-t[,2:ncol(t)]-t[,2]
+t<-sqrt(t*t)
+t<-colSums(t)
+# data now looks like this
+#  cef2cd00  4e6b546f  75627e6a 
+# 0.0000000 0.5271991 0.5358380 
+
+t<-as.data.frame(t)
+t<-cbind(rownames(t), t)
+colnames(t)<-c("pass","rms")
+t$pass<-as.factor(as.character(t$pass))
+
+rms_delta<-t
+
+# the output looks something like this
+#              pass       rms
+# e269d585 e269d585 0.0000000
+# cef2cd00 cef2cd00 0.7010656
+# 4e6b546f 4e6b546f 0.8619598
+# 75627e6a 75627e6a 0.6546053
+# 87bf2089 87bf2089 0.3808761
+# 7ed30ddf 7ed30ddf 0.7206156
+# 125732b8 125732b8 0.4011173
+# ab7f3446 ab7f3446 0.5416880
+# a2acc1b9 a2acc1b9 0.7228332
+
+p<-ggplot(rms_delta, aes(x=pass, y=rms))
+p<-p+geom_point(color="#3322A6", size=7)
+p <- p + ggtitle("rms delta from normalized chair count")
+p <- p + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+print(p)
+
+
+```
+
 
 ```{r, "plot probs", echo=FALSE, fig.align="center", fig.height=4, fig.width=9}
 
-p <- ggplot(skier_probs_melted, aes(x=pass, y=10^(value), fill=chair_list))
+
+p <- ggplot(skier_probs_melted, aes(x=pass, y=value, fill=chair_list))
 p <- p + geom_bar(stat="identity")
 p <- p + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p <- p + ggtitle("skier average chairlift frequency")
@@ -894,6 +1039,116 @@ print(p)
 As can be seen there are strong variations in the choice of chairlifts between skiers. 
 
 ## MLE for Ski days
+
+```{r}
+
+set.seed(8675309+3)
+## just get one pass
+pass_sample<-"MBA6360970.csv"#sample(valid_pass, 1)
+
+##calculate reference for rms
+    skier_probs<-NULL
+    chair_list<-rownames(look_up)
+    chair_list<-gsub(" ", "_", chair_list)
+
+    skier_probs<-as.data.frame(chair_list)
+
+    ##get overall skier probs    
+        pass<-pass_sample
+        ## read in the pass data
+        ski_runs<-NULL
+    
+        ski_runs<-read.csv(paste0(Directory, pass))
+    
+        ##fix Pine_Marten
+        ski_runs$chair<-gsub(" ", "_", ski_runs$chair)
+    
+        ## suppress pass_id column
+        ski_runs$pass_id<-NULL
+        ## hash the pass identity
+        pass_s<-digest(pass, algo="xxhash32")
+        ski_runs$pass<-pass_s
+    
+        prob<-chair_probs(ski_runs$chair, chair_list)
+    
+        colnames(prob)<-pass_s
+    
+        ##handle exception on first pass
+        if (!is.null(skier_probs)) {skier_probs <- cbind(skier_probs, prob)} else {skier_probs<-prob}
+    ## get dates
+        
+        
+        
+    dates_list<-unique(ski_runs$date)
+    
+    day_probs<-NULL
+    
+    for (i_date in dates_list){
+        
+        #i_date<-dates_list[1]
+        day_runs<-ski_runs[ski_runs$date==i_date,]
+    
+        prob<-chair_probs(day_runs$chair, chair_list)
+        
+        colnames(prob)<-i_date
+    
+        ##handle exception on first pass
+        if (!is.null(day_probs)) {day_probs <- cbind(day_probs, prob)} else {day_probs<-prob}
+    
+        
+    }
+
+    t<-day_probs
+    t<-t[,1:ncol(t)]-skier_probs[,2]
+    
+           colMin <- function(data) sapply(data, min, na.rm = TRUE)
+
+    w<-colMin(t)      
+    t<-sqrt(t*t)
+    
+        colMax <- function(data) sapply(data, max, na.rm = TRUE)
+    
+    y<-colMax(t)
+    
+    z<-colSums(t)
+    #convert to long format
+    u<-melt(t)
+    v<-melt(y)
+    z<-melt(w)
+    u$date<-rownames(u)
+    v$date<-rownames(v)
+    z$date<-rownames(z)
+    
+    day_probs$chair<-rownames(day_probs)
+    b<-melt(day_probs, id="chair")
+    colnames(b)<-c("chair", "date", "prob")
+    
+    p<-ggplot(b, aes(x=date, y= prob, color = factor(chair)))
+    p <- p + geom_point()
+    print(p)
+    
+    
+    q<- ggplot(u, aes(x=date, y = value))
+    q<- q + geom_point(size = 3, color = "salmon")
+    print(q)
+    
+    q<- ggplot(v, aes(x=date, y = value))
+    q<- q + geom_point(size = 3, color = "darkgreen")
+    print(q)
+    
+    q<- ggplot(z, aes(x=date, y = abs(value)))
+    q<- q + geom_point(size = 2, color = "darkblue")
+    print(q)
+    
+    # this is what ski_runs will look like
+#                    time       chair vertical_feet vertical_meters year month day time_of_day       date     pass
+# 1   2006-03-11 11:14:33 Pine_Marten          1367             416 2006     3  11    11:14:33 2006-03-11 a016b213
+# 2   2006-03-11 11:27:59 Pine_Marten          1367             416 2006     3  11    11:27:59 2006-03-11 a016b213
+# 3   2006-03-11 11:43:00 Pine_Marten          1367             416 2006     3  11    11:43:00 2006-03-11 a016b213
+# 4   2006-03-11 11:43:00 Pine_Marten          1367             416 2006     3  11    11:43:00 2006-03-11 a016b213
+
+
+```
 
 The approach will be to take the averaged probabilities and use the MLE's for a single skier to calculate the expected probability for each ski day for a large sample of skiers.  
 Here is a sample of skier probabilities (expressed as logarithms) for a specific passholder.    
@@ -923,7 +1178,7 @@ Here is a sample of skier probabilities (expressed as logarithms) for a specific
 ```
 
 The table above shows the probabilities for `r sampled_pass_hashed`.
-We can use the same lookup methodology.
+
 
 ```{r, echo=FALSE}
 
